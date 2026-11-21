@@ -12,4 +12,14 @@ function restaurarReloj() {
   _relojFijado = null;
 }
 
-export { ahora, fijarAhora, restaurarReloj };
+function parsearFecha(isoString) {
+  return new Date(isoString);
+}
+
+function sumarDias(base, dias) {
+  const fecha = new Date(base);
+  fecha.setDate(fecha.getDate() + dias);
+  return fecha;
+}
+
+export { ahora, fijarAhora, restaurarReloj, parsearFecha, sumarDias };

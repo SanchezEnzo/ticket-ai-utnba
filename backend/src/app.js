@@ -2,6 +2,8 @@ import express from 'express';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { auth } from './middleware/auth.js';
 import { crearRutasAuth } from './routes/auth.js';
+import { crearRutasEvento } from './routes/eventos.js';
+import { crearRutasCategoria } from './routes/categorias.js';
 
 function crearApp({ repositorios, servicios, controllers }) {
   const app = express();
@@ -22,6 +24,18 @@ function crearApp({ repositorios, servicios, controllers }) {
     authMiddleware,
   });
   app.use('/auth', authRoutes);
+
+  const eventoRoutes = crearRutasEvento({
+    eventoController: controllers.eventoController,
+    authMiddleware,
+  });
+  app.use('/eventos', eventoRoutes);
+
+  const categoriaRoutes = crearRutasCategoria({
+    eventoController: controllers.eventoController,
+    authMiddleware,
+  });
+  app.use('/categorias', categoriaRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
