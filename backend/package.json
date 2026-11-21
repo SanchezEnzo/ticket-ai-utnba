@@ -6,9 +6,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test 'test/**/*.test.js'",
-    "test:domain": "node --test 'test/domain/**/*.test.js'",
-    "test:api": "node --test 'test/api/**/*.test.js'"
+    "test": "node --test test/**/*.test.js",
+    "test:domain": "node --test test/domain/**/*.test.js",
+    "test:api": "node --test test/api/**/*.test.js"
   },
   "keywords": [],
   "author": "",
