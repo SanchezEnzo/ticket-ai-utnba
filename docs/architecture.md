@@ -218,6 +218,22 @@ backend/
   test/
 ```
 
+### Clases e inyección de dependencias
+
+- Controllers y services son **clases**. Los repositorios ya lo son.
+- Las dependencias se inyectan por constructor, recibiendo un único objeto:
+  `new AuthService({ usuarioRepository, sesionService })`.
+- Los handlers de un controller son **arrow functions como class fields**
+  (`login = async (req, res) => {}`), para no perder `this` cuando Express
+  los invoca. Las rutas pasan `controller.login` sin `bind`.
+- El composition root (`server.js`) instancia repositorios, luego services
+  y luego controllers, en ese orden. Ninguna clase importa a otra para
+  instanciarla.
+- Los middlewares (`auth`, `validar`, `asyncHandler`) siguen siendo
+  funciones factory.
+- Los services lanzan errores de dominio; los controllers no tienen
+  try/catch propio.
+
 ## 4. Mobile
 
 - Expo con React Native.
