@@ -3,7 +3,7 @@
 Decisiones técnicas del proyecto. Las reglas de negocio están en
 `docs/business-context.md`; acá solo se define **cómo** se construye.
 
-## 1. Visión general
+## 1. Stack
 
 - **Backend** (`backend/`): Node.js + Express, JavaScript, API REST.
   Persistencia en memoria, sin base de datos.
@@ -11,6 +11,7 @@ Decisiones técnicas del proyecto. Las reglas de negocio están en
   físico que se conecta al backend por la red local.
 - Dependencias del backend aprobadas: `express` y `zod`. Cualquier otra se
   consulta antes de agregarla.
+  Gestor de paquetes: pnpm (no usar npm ni yarn). Las dependencias se agregan con versión exacta: pnpm add --save-exact.
 
 ## 2. Convenciones
 
