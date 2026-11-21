@@ -90,7 +90,7 @@ Las del diagrama del TP: `Usuario`, `Evento`, `Categoria`, `TipoEntrada`,
 ### Persistencia en memoria
 
 - Cada repositorio tiene una interfaz (métodos como `guardar`, `buscarPorId`,
-  `listar`) y una implementación sobre `Map` o arrays.
+  `listarPorComprador`, `listarPorEvento`) y una implementación sobre `Map` o arrays.
 - Al arrancar, un módulo de seed carga datos de ejemplo: usuarios,
   categorías, eventos con varios tipos de entrada y compras en distintos
   estados. El seed es un script determinístico, siempre igual, con fechas
