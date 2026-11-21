@@ -22,7 +22,7 @@ apoyen en ella. Esta fase no implementa ningún caso de uso.
 - Estructura de carpetas de `docs/architecture.md` sección 3 (con un
   `.gitkeep` en las carpetas que quedan vacías):
   `src/routes`, `src/controllers`, `src/services`, `src/domain`,
-  `src/repositories`, `src/middleware`, `src/seed`, `test/helpers`,
+  `src/repositories`, `src/schemas`, `src/middleware`, `src/seed`, `test/helpers`,
   `test/domain`, `test/api`.
 
 ### 3. Arranque del servidor
