@@ -22,6 +22,18 @@ class CompraController {
     const compras = this.compraService.misCompras(req.usuario);
     res.json(compras.map((c) => c.paraRespuesta()));
   };
+
+  usar = (req, res) => {
+    const { id } = req.validado.params;
+    const compra = this.compraService.usar(id, req.usuario);
+    res.json(compra.paraRespuesta());
+  };
+
+  cancelar = (req, res) => {
+    const { id } = req.validado.params;
+    const compra = this.compraService.cancelar(id, req.usuario);
+    res.json(compra.paraRespuesta());
+  };
 }
 
 export { CompraController };

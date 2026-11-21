@@ -36,6 +36,32 @@ class CompraService {
     }
 
     compra.actualizarEstado(EstadoCompra.CONFIRMADA, comprador);
+    this.compraRepository.guardar(compra);
+    this.eventoRepository.guardar(compra.evento);
+    return compra;
+  }
+
+  usar(compraId, usuario) {
+    const compra = this.compraRepository.buscarPorId(compraId);
+    if (!compra) {
+      throw new NotFoundError('La compra no existe.');
+    }
+
+    compra.actualizarEstado(EstadoCompra.UTILIZADA, usuario);
+    this.compraRepository.guardar(compra);
+    this.eventoRepository.guardar(compra.evento);
+    return compra;
+  }
+
+  cancelar(compraId, usuario) {
+    const compra = this.compraRepository.buscarPorId(compraId);
+    if (!compra) {
+      throw new NotFoundError('La compra no existe.');
+    }
+
+    compra.actualizarEstado(EstadoCompra.CANCELADA, usuario);
+    this.compraRepository.guardar(compra);
+    this.eventoRepository.guardar(compra.evento);
     return compra;
   }
 

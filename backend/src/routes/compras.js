@@ -31,6 +31,20 @@ function crearRutasCompra({ compraController, authMiddleware }) {
     asyncHandler(compraController.misCompras),
   );
 
+  router.post(
+    '/:id/uso',
+    authMiddleware,
+    validar({ params: compraIdParamsSchema, query: emptyQuerySchema }),
+    asyncHandler(compraController.usar),
+  );
+
+  router.post(
+    '/:id/cancelacion',
+    authMiddleware,
+    validar({ params: compraIdParamsSchema, query: emptyQuerySchema }),
+    asyncHandler(compraController.cancelar),
+  );
+
   return router;
 }
 
