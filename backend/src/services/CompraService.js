@@ -1,4 +1,4 @@
-import { NotFoundError } from '../domain/errors.js';
+import { NotFoundError, ForbiddenError } from '../domain/errors.js';
 import { EstadoCompra, Compra } from '../domain/Compra.js';
 
 class CompraService {
@@ -69,6 +69,22 @@ class CompraService {
     const compras = this.compraRepository.listarPorComprador(comprador.id);
     compras.sort((a, b) => b.historial[0].fechaHora - a.historial[0].fechaHora);
     return compras;
+  }
+
+  comprasDelEvento(eventoId, usuario) {
+    const evento = this.eventoRepository.buscarPorId(eventoId);
+    if (!evento) {
+      throw new NotFoundError('El evento no existe.');
+    }
+
+    if (!evento.esOrganizadoPor(usuario)) {
+      throw new ForbiddenError('Solo el organizador puede ver las compras de este evento.');
+    }
+
+    const compras = this.compraRepository.listarPorEvento(eventoId);
+    compras.sort((a, b) => b.historial[0].fechaHora - a.historial[0].fechaHora);
+
+    return { evento, compras };
   }
 }
 

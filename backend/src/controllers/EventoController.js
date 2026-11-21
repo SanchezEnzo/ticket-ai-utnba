@@ -1,6 +1,7 @@
 class EventoController {
-  constructor({ eventoService }) {
+  constructor({ eventoService, compraService }) {
     this._eventoService = eventoService;
+    this._compraService = compraService;
   }
 
   listarCategorias = (req, res, _next) => {
@@ -25,6 +26,26 @@ class EventoController {
     const { q, categoria, orden } = req.validado.query;
     const eventos = this._eventoService.listarEventos({ q, categoria, orden });
     res.json(eventos.map((e) => e.sinDetalles()));
+  };
+
+  comprasDelEvento = async (req, res, next) => {
+    const { id } = req.validado.params;
+    const { evento, compras } = this._compraService.comprasDelEvento(id, req.usuario);
+    res.json({
+      evento: {
+        id: evento.id,
+        nombre: evento.nombre,
+        fecha: evento.fecha.toISOString(),
+        tiposEntrada: evento.tiposEntrada.map((te) => ({
+          id: te.id,
+          nombre: te.nombre,
+          precio: te.precio,
+          cupo: te.cupo,
+          cupoDisponible: te.cupoDisponible,
+        })),
+      },
+      compras: compras.map((c) => c.paraRespuesta()),
+    });
   };
 }
 

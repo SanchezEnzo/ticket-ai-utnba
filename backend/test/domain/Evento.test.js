@@ -288,4 +288,56 @@ describe('Evento', () => {
       assert.equal(detalle.tiposEntrada[0].cupoDisponible, 200);
     });
   });
+
+  describe('esOrganizadoPor', () => {
+    it('debe ser verdadero para el organizador del evento', () => {
+      const organizador = crearOrganizador();
+      const evento = Evento.crear({
+        id: 'evt1',
+        nombre: 'Concierto',
+        descripcion: 'Un concierto',
+        categoria: crearCategoria(),
+        fecha: '2027-06-01T21:00:00.000Z',
+        tiposEntrada: [crearTipoEntrada(15000)],
+        multimedia: [],
+        organizador,
+      });
+
+      assert.equal(evento.esOrganizadoPor(organizador), true);
+    });
+
+    it('debe ser falso para un usuario diferente al organizador', () => {
+      const organizador = crearOrganizador();
+      const otroUsuario = { id: 'otro1', nombre: 'Otro', apellido: 'Usuario', email: 'otro@test.com' };
+      const evento = Evento.crear({
+        id: 'evt1',
+        nombre: 'Concierto',
+        descripcion: 'Un concierto',
+        categoria: crearCategoria(),
+        fecha: '2027-06-01T21:00:00.000Z',
+        tiposEntrada: [crearTipoEntrada(15000)],
+        multimedia: [],
+        organizador,
+      });
+
+      assert.equal(evento.esOrganizadoPor(otroUsuario), false);
+    });
+
+    it('debe ser falso para el comprador que no es el organizador', () => {
+      const organizador = crearOrganizador();
+      const comprador = { id: 'comp1', nombre: 'Comprador', apellido: 'Test', email: 'comp@test.com' };
+      const evento = Evento.crear({
+        id: 'evt1',
+        nombre: 'Concierto',
+        descripcion: 'Un concierto',
+        categoria: crearCategoria(),
+        fecha: '2027-06-01T21:00:00.000Z',
+        tiposEntrada: [crearTipoEntrada(15000)],
+        multimedia: [],
+        organizador,
+      });
+
+      assert.equal(evento.esOrganizadoPor(comprador), false);
+    });
+  });
 });

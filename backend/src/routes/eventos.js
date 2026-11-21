@@ -6,6 +6,7 @@ import {
   listarEventosQuerySchema,
   crearEventoBodySchema,
 } from '../schemas/eventos.js';
+import { emptyQuerySchema } from '../schemas/compras.js';
 
 function crearRutasEvento({ eventoController, authMiddleware }) {
   const router = Router();
@@ -35,6 +36,13 @@ function crearRutasEvento({ eventoController, authMiddleware }) {
     authMiddleware,
     validar({ query: listarEventosQuerySchema }),
     asyncHandler(eventoController.listarEventos)
+  );
+
+  router.get(
+    '/:id/compras',
+    authMiddleware,
+    validar({ params: eventoIdParamsSchema, query: emptyQuerySchema }),
+    asyncHandler(eventoController.comprasDelEvento)
   );
 
   return router;

@@ -71,6 +71,10 @@ class Evento {
     return this.fecha < ahora();
   }
 
+  esOrganizadoPor(usuario) {
+    return this.organizador.id === usuario.id;
+  }
+
   sinDetalles() {
     return {
       id: this.id,

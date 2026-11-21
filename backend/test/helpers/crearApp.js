@@ -46,7 +46,7 @@ export async function crearApp() {
 
   // 3. Controllers
   const authController = new AuthController({ authService });
-  const eventoController = new EventoController({ eventoService });
+  const eventoController = new EventoController({ eventoService, compraService });
   const compraController = new CompraController({ compraService });
 
   const app = crearAppExpress({

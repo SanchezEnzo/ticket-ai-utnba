@@ -25,6 +25,16 @@ class CompraRepository {
     }
     return resultado;
   }
+
+  listarPorEvento(eventoId) {
+    const resultado = [];
+    for (const compra of this._compras.values()) {
+      if (compra.evento.id === eventoId) {
+        resultado.push(compra);
+      }
+    }
+    return resultado;
+  }
 }
 
 export { CompraRepository };
