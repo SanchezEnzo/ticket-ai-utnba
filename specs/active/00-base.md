@@ -16,19 +16,26 @@ apoyen en ella. Esta fase no implementa ningún caso de uso.
 - Existe la carpeta `specs/active/`.
 
 ### 2. Proyecto backend
-- `backend/package.json` con **solo dos dependencia: `express` y `zod` **.
+- `backend/package.json` con **solo dos dependencias: `express` y `zod`**
+  (esta última fijada a una versión exacta, sin `^`). Se usa a partir del
+  spec 01 para validar la entrada HTTP; no se usa en este spec, pero se
+  instala acá para dejar el `package.json` completo.
 - Scripts exactamente como figuran en `docs/testing.md` sección 2:
   `start`, `test`, `test:domain`, `test:api`.
 - Estructura de carpetas de `docs/architecture.md` sección 3 (con un
   `.gitkeep` en las carpetas que quedan vacías):
   `src/routes`, `src/controllers`, `src/services`, `src/domain`,
-  `src/repositories`, `src/schemas`, `src/middleware`, `src/seed`, `test/helpers`,
-  `test/domain`, `test/api`.
+  `src/repositories`, `src/middleware`, `src/schemas`, `src/seed`,
+  `test/helpers`, `test/domain`, `test/middleware`, `test/api`.
 
 ### 3. Arranque del servidor
 - `src/app.js` crea la app Express (con `express.json()`) y la **exporta**.
   No llama a `listen`.
 - `src/server.js` importa la app y la levanta en `process.env.PORT` (3000 por defecto).
+- Todo el backend usa **módulos ES (ESM)**: `"type": "module"` en
+  `package.json`, `import`/`export` y extensión `.js` explícita en los
+  imports relativos (`import { app } from './app.js'`). No se mezcla con
+  `require` ni `module.exports`.
 
 ### 4. Reloj
 - Un único módulo `src/domain/reloj.js` que exporta `ahora()` (devuelve un
@@ -56,7 +63,7 @@ apoyen en ella. Esta fase no implementa ningún caso de uso.
 - [ ] `npm install` termina sin errores.
 - [ ] `npm test` pasa y muestra al menos el test de humo.
 - [ ] `npm start` levanta el servidor y `GET /salud` responde 200.
-- [ ] `package.json` tiene solo `express` en `dependencies` y no tiene `devDependencies`.
+- [ ] `package.json` tiene solo `express` y `zod` (versión exacta) en `dependencies` y no tiene `devDependencies`.
 - [ ] `app.js` exporta la app y no llama a `listen`.
 - [ ] `package.json` tiene `"type": "module"` y no hay `require(` ni `module.exports` en `src/` ni en `test/`.
 - [ ] `grep` de `new Date(` y `Date.now(` fuera de `reloj.js` no devuelve resultados.
