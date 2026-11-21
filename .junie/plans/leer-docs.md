@@ -4,157 +4,148 @@ sessionId: session-261121-045435-1vye
 
 # Requirements
 
-### Overview & Goals
+### ✓ Step 1: Crear AuthService y AuthController como clases
 
-Dejar la estructura del backend lista para que todos los specs siguientes se apoyen en ella. Esta fase no implementa ningún caso de uso de negocio.
+Refactorizar el módulo de autenticación para que controllers y services sean clases, según la sección "Clases e inyección de dependencias" de `docs/architecture.md`. No debe cambiar el comportamiento observable: rutas, status codes, formato de respuestas y mensajes de error son los mismos.
 
 ### Scope
 
 **In Scope:**
-- Crear `backend/package.json` con `express` y `zod` (versión exacta) como únicas dependencias.
-- Scripts de `package.json`: `start`, `test`, `test:domain`, `test:api`.
-- Estructura de carpetas según `docs/architecture.md` sección 3, con `.gitkeep` en carpetas vacías.
-- `src/app.js`: crea la app Express con `express.json()`, la exporta, no llama a `listen`.
-- `src/server.js`: importa la app y la levanta en `process.env.PORT` (3000 por defecto).
-- Módulos ES (ESM): `"type": "module"` en `package.json`, `import`/`export`, extensión `.js` explícita.
-- `src/domain/reloj.js`: exporta `ahora()`, `fijarAhora(fecha)` y `restaurarReloj()`.
-- `test/helpers/crearApp.js`: crea app nueva, la levanta en puerto 0, devuelve `{ baseUrl, close }`.
-- `test/helpers/login.js`: esqueleto documentado, se completa en spec 01.
-- `GET /salud` responde `{ "estado": "ok" }` (ruta temporal, se elimina en spec 01).
-- `test/api/salud.test.js`: test de humo que verifica la respuesta y el cierre del servidor.
+- Crear `services/AuthService.js` (clase) que centralice la lógica de login.
+- Reemplazar `controllers/authController.js` por `controllers/AuthController.js` (clase) con handlers como arrow functions class fields.
+- `routes/auth.js`: `crearRutasAuth` recibe el controller ya instanciado.
+- `server.js`: instanciar en orden repositorios → services → controllers.
+- `app.js`: recibir controllers y servicios, pasar servicios al middleware auth.
+- `middleware/auth.js`: recibir `servicios` en lugar de `repositorios` para acceder a `sesionService`.
+- `test/helpers/crearApp.js`: ajustar al nuevo cableado.
+- `sesionService` ya no se pasa en `repositorios`, solo en `servicios`.
 
 **Out of Scope:**
-- Errores de dominio, middleware de errores y autenticación (spec 01).
-- Entidades, repositorios, seed y cualquier endpoint de negocio.
-- Todo lo de `mobile/`.
+- Schemas, validar, errorHandler.
+- Reglas de dominio.
+- `SesionService.js` (ya es clase, no se toca).
+- Nombres de propiedades (`req.validado` se mantiene).
 
 ### Acceptance Criteria
 
-- `npm install` termina sin errores.
-- `npm test` pasa y muestra al menos el test de humo.
-- `npm start` levanta el servidor y `GET /salud` responde 200.
-- `package.json` tiene solo `express` y `zod` (versión exacta) en `dependencies` y no tiene `devDependencies`.
-- `app.js` exporta la app y no llama a `listen`.
-- `package.json` tiene `"type": "module"` y no hay `require(` ni `module.exports` en `src/` ni en `test/`.
-- `grep` de `new Date(` y `Date.now(` fuera de `reloj.js` no devuelve resultados.
-- Las carpetas coinciden con `docs/architecture.md`.
+- `pnpm test` completo pasa (todos los tests existentes).
+- Rutas, status codes, formato de respuestas y mensajes de error son idénticos.
+- Controllers y services son clases con inyección por constructor.
+- Handlers son arrow functions class fields.
+- `server.js` instancia en orden: repositorios → services → controllers.
+- `sesionService` solo vive en `servicios`, no en `repositorios`.
+- Ningún controller tiene try/catch.
+- No se agregaron dependencias.
 
 # Technical Design
 
 ### Current Implementation
 
-El proyecto solo contiene documentación (`docs/`), specs (`specs/active/`) y un `.gitignore`. No existe la carpeta `backend/` ni ningún código fuente.
+**Cableado actual:**
+- `server.js` instancia `usuarioRepository`, `sesionService` y pasa ambos en `repositorios` y `servicios` (duplicado).
+- `app.js` (`crearApp`) recibe `{ repositorios, servicios }` y los pasa a `crearRutasAuth`.
+- `routes/auth.js` (`crearRutasAuth`) recibe `(repositorios, servicios)` y los pasa a `login()` y `yo()` del controller.
+- `controllers/authController.js` exporta funciones factory `login(repositorios, servicios)` y `yo(repositorios, servicios)`.
+- `middleware/auth.js` recibe `repositorios` y accede a `repositorios.sesionService`.
+- `test/helpers/crearApp.js` duplica `sesionService` en ambos objetos.
+
+**Problema:** El controller es un módulo de funciones factory, no una clase. El `sesionService` está duplicado en `repositorios` y `servicios`.
 
 ### Key Decisions
 
-- **Módulos ES (ESM):** `"type": "module"` en `package.json`. Todos los imports relativos usan extensión `.js` explícita.
-- **Zod con versión exacta:** Sin `^` ni `~`, para cumplir con la regla de `AGENTS.md` de usar `pnpm add --save-exact`.
-- **Reloj centralizado:** `src/domain/reloj.js` con `ahora()`, `fijarAhora()` y `restaurarReloj()`. Ningún otro archivo usa `new Date()` ni `Date.now()` directamente.
-- **Helper de test con puerto efímero:** `crearApp.js` usa `listen(0)` para no depender del puerto 3000.
-- **Ruta `/salud` temporal:** Solo para validar que el servidor arranca y responde. Se elimina en el spec 01.
+- **`sesionService` solo en `servicios`:** Se elimina de `repositorios`. El middleware auth ahora recibe `servicios` en lugar de `repositorios`.
+- **`AuthService` como clase:** Centraliza login: busca usuario, verifica password, crea token, devuelve `{ token, usuario }` sin password.
+- **`AuthController` como clase:** Handlers como arrow functions class fields. Constructor recibe `{ authService }`.
+- **`crearRutasAuth` recibe controller instanciado:** Ya no necesita repositorios ni servicios.
+- **`app.js` recibe controllers:** Nuevo parámetro `controllers` en `crearApp`.
 
 ### Proposed Changes
 
-**1. `backend/package.json`**
-- `"type": "module"`.
-- Dependencias: `express` y `zod` (versión exacta).
-- Scripts: `start`, `test`, `test:domain`, `test:api` (según `docs/testing.md` sección 2).
+**1. `src/services/AuthService.js` (nuevo)**
+- Clase. Constructor: `{ usuarioRepository, sesionService }`.
+- `login(email, password)`: busca usuario por email, verifica password, crea token, devuelve `{ token, usuario }` donde `usuario` es `usuario.sinPassword()`.
+- Si las credenciales son incorrectas lanza `UnauthorizedError('Email o contraseña incorrectos.')` — mismo mensaje para email inexistente y password incorrecta.
 
-**2. Estructura de carpetas (con `.gitkeep`)**
-```
-backend/
-  src/
-    app.js
-    server.js
-    routes/          (.gitkeep)
-    controllers/     (.gitkeep)
-    services/        (.gitkeep)
-    domain/
-      reloj.js
-    repositories/    (.gitkeep)
-    middleware/      (.gitkeep)
-    schemas/         (.gitkeep)
-    seed/            (.gitkeep)
-  test/
-    helpers/
-      crearApp.js
-      login.js
-    domain/          (.gitkeep)
-    middleware/      (.gitkeep)
-    api/
-      salud.test.js
-```
+**2. `src/controllers/AuthController.js` (nuevo, reemplaza authController.js)**
+- Clase. Constructor: `{ authService }`.
+- `login = async (req, res, next) => {}`: lee `req.validado.body`, llama a `authService.login`, responde `res.json({ token, usuario })`.
+- `yo = (req, res, _next) => {}`: responde `req.usuario.sinPassword()`.
+- Sin reglas de negocio ni try/catch.
 
-**3. `src/app.js`**
-- Importa `express`, crea la app, configura `express.json()`.
-- Agrega la ruta `GET /salud` que responde `{ "estado": "ok" }`.
-- Exporta la app (`module.exports` → no, usa `export { app }` o `export default app`).
+**3. `src/routes/auth.js` (modificado)**
+- `crearRutasAuth(authController)` recibe el controller ya instanciado.
+- Usa `asyncHandler(authController.login)` y `authController.yo`.
+- Ya no recibe `repositorios` ni `servicios`.
 
-**4. `src/server.js`**
-- Importa la app de `./app.js`.
-- Lee `process.env.PORT` (3000 por defecto).
-- Llama a `app.listen()` y logs el puerto.
+**4. `src/middleware/auth.js` (modificado)**
+- Cambia `auth(repositorios)` a `auth(servicios)`.
+- Accede a `servicios.sesionService` en lugar de `repositorios.sesionService`.
 
-**5. `src/domain/reloj.js`**
-- Variable privada `_relojFijado` (null por defecto).
-- `ahora()`: devuelve `_relojFijado` si está fijado, sino `new Date()`.
-- `fijarAhora(fecha)`: fija `_relojFijado` a `fecha`.
-- `restaurarReloj()`: resetea `_relojFijado` a null.
+**5. `src/app.js` (modificado)**
+- `crearApp({ repositorios, servicios, controllers })` recibe controllers.
+- Pasa `servicios` al middleware auth (en lugar de `repositorios`).
+- Pasa `controllers.authController` a `crearRutasAuth`.
 
-**6. `test/helpers/crearApp.js`**
-- Importa la app de `../../src/app.js`.
-- La levanta con `listen(0)`.
-- Devuelve `{ baseUrl, close }` donde `baseUrl` es `http://localhost:<puerto_efimero>` y `close()` cierra el servidor.
+**6. `src/server.js` (modificado)**
+- Instanciar en orden:
+  1. Repositorios: `new UsuarioRepository()` + seed.
+  2. Services: `new SesionService()`, `new AuthService({ usuarioRepository, sesionService })`.
+  3. Controllers: `new AuthController({ authService })`.
+- Pasar a `crearApp`: `{ repositorios: { usuarioRepository }, servicios: { sesionService, authService }, controllers: { authController } }`.
+- `sesionService` ya no en `repositorios`.
 
-**7. `test/helpers/login.js`**
-- Esqueleto con comentarios documentando que se completa en el spec 01.
-- Exporta una función `login(fetch, baseUrl, email, password)` que por ahora lanza `Error('No implementado. Se completa en spec 01.')`.
+**7. `test/helpers/crearApp.js` (modificado)**
+- Instanciar AuthService y AuthController como en server.js.
+- Pasar controllers a `crearApp`.
+- `sesionService` solo en `servicios`.
 
-**8. `test/api/salud.test.js`**
-- Usa `node:test` y `node:assert/strict`.
-- Levanta la app con `crearApp`.
-- Hace `GET /salud` con `fetch`.
-- Verifica que la respuesta sea `{ "estado": "ok" }`.
-- Cierra el servidor con `close()`.
+**8. Eliminar `src/controllers/authController.js`
 
 ### Architecture Diagram
 
-``` mermaid
+```mermaid
 graph LR
-  A[server.js] -->|importa| B[app.js]
-  B -->|usa| C[express]
-  B -->|ruta| D[GET /salud]
-  E[reloj.js] -->|exporta| F[ahora / fijarAhora / restaurarReloj]
-  G[crearApp.js] -->|importa| B
-  H[salud.test.js] -->|usa| G
-  H -->|usa| I[fetch]
+  S[server.js] -->|instancia| R[UsuarioRepository]
+  S -->|instancia| SS[SesionService]
+  S -->|instancia| AS[AuthService]
+  S -->|instancia| AC[AuthController]
+  AS -->|recibe| R
+  AS -->|recibe| SS
+  AC -->|recibe| AS
+  A[app.js] -->|recibe| C[controllers]
+  A -->|recibe| SV[servicios]
+  A -->|pasa servicios| M[middleware/auth.js]
+  M -->|usa| SS
+  A -->|pasa controller| RT[routes/auth.js]
+  RT -->|usa| AC
 ```
 
 ### Risks
 
-- **Zod sin usar en este spec:** Se instala pero no se importa ni usa. Esto es intencional: el spec 01 lo usará para validación. Verificar que no haya imports de zod en el código actual.
-- **Puerto efímero:** `crearApp.js` usa `listen(0)`. El puerto real se obtiene del servidor con `server.address().port`.
+- **Middleware auth cambia su parámetro:** De `repositorios` a `servicios`. Esto es un cambio de firma que afecta a `app.js` y `crearApp.js` (test). Se actualizan todos juntos.
+- **Tests existentes:** Los tests de `auth.test.js` no instancian controllers directamente — usan `crearApp` — por lo que solo necesitan que `crearApp` funcione igual.
 
-# Delivery Steps
+### ✓ Step 2: Actualizar cableado y ejecutar tests
 
-### ✓ Step 1: Crear package.json y estructura de carpetas
-Se crea `backend/package.json` con dependencias, scripts y estructura de carpetas completa.
-- Crear `backend/package.json` con `"type": "module"`, dependencias `express` y `zod` (versión exacta), y scripts `start`, `test`, `test:domain`, `test:api`.
-- Ejecutar `npm install` en `backend/` para instalar las dependencias.
-- Crear la estructura de carpetas: `src/routes`, `src/controllers`, `src/services`, `src/domain`, `src/repositories`, `src/middleware`, `src/schemas`, `src/seed`, `test/helpers`, `test/domain`, `test/middleware`, `test/api`.
-- Agregar `.gitkeep` en las carpetas vacías (todas excepto `src/domain`, `test/helpers`, `test/api`).
+# Testing
 
-### ✓ Step 2: Implementar app.js, server.js y reloj.js
-Se crean los módulos de arranque del servidor y el reloj centralizado.
-- `src/app.js`: crea la app Express con `express.json()`, agrega `GET /salud` que responde `{ "estado": "ok" }`, y exporta la app.
-- `src/server.js`: importa la app, lee `process.env.PORT` (3000 por defecto), llama a `app.listen()` y logs el puerto.
-- `src/domain/reloj.js`: exporta `ahora()`, `fijarAhora(fecha)` y `restaurarReloj()`. Usa `new Date()` solo aquí.
-- Verificar que no haya `require(` ni `module.exports` en ningún archivo de `src/`.
+### Validation Approach
 
-### ✓ Step 3: Implementar helpers de test y test de humo
-Se crean los helpers de test y el test de humo para validar el arranque del servidor.
-- `test/helpers/crearApp.js`: importa la app, la levanta en puerto 0 con `listen(0)`, devuelve `{ baseUrl, close }`.
-- `test/helpers/login.js`: esqueleto documentado que lanza error indicando que se completa en spec 01.
-- `test/api/salud.test.js`: usa `node:test` y `node:assert/strict`, levanta la app con `crearApp`, hace `GET /salud` con `fetch`, verifica la respuesta y cierra el servidor.
-- Ejecutar `npm test` y verificar que pasa el test de humo.
-- Ejecutar `npm start` y verificar que `GET /salud` responde 200.
+Ejecutar `pnpm test` en `backend/` y verificar que todos los tests pasan.
+
+### Key Scenarios
+
+- Login correcto devuelve token y usuario.
+- Login incorrecto (email/password) devuelve 401.
+- `GET /auth/yo` con token válido devuelve usuario.
+- `GET /auth/yo` sin token devuelve 401.
+- Validación de schemas (strict, campos faltantes, etc.).
+- Errores de dominio (404, 400 JSON inválido, 500).
+- Usuario: hash, verificar, sinPassword.
+
+### Edge Cases
+
+- Dos logins del mismo usuario devuelven tokens distintos.
+- Token inventado responde 401.
+- Clave extra en body responde 400.
+
