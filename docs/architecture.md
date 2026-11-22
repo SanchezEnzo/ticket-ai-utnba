@@ -104,6 +104,12 @@ La lógica vive en las entidades, no en los services:
     o `null` si no hay reseñas.
   - `paraRespuesta()` devuelve el objeto de respuesta con autor y evento
     sin exponer email ni contraseña.
+- `Usuario`:
+  - `marcarFavorito(eventoId)`: agrega el ID al array `favoritos` si no
+    existe (idempotente).
+  - `desmarcarFavorito(eventoId)`: quita el ID del array `favoritos`.
+  - `esFavorito(eventoId)`: devuelve `true` si el ID está en `favoritos`.
+  - `sinPassword()`: incluye `favoritos` como copia del array.
 - `SISTEMA`: constante que representa al sistema como actor de los cambios
   automáticos.
 - Las transiciones de estado inválidas lanzan `ConflictError`; el usuario
@@ -217,9 +223,9 @@ Todos requieren autenticación salvo el login.
 | POST | `/compras/:id/cancelacion` | Cancelar (y reembolsar si corresponde) |
 | GET | `/compras/:id/mensajes?desde=` | Mensajes de la compra |
 | POST | `/compras/:id/mensajes` | Enviar mensaje |
-| GET | `/favoritos` | Mis favoritos |
-| PUT | `/favoritos/:eventoId` | Marcar favorito |
-| DELETE | `/favoritos/:eventoId` | Quitar favorito |
+| GET | `/favoritos` | Mis favoritos (200, mismo formato que `GET /eventos`, ordenados por fecha y nombre, incluye realizados) |
+| PUT | `/favoritos/:eventoId` | Marcar favorito (204, idempotente, 404 si el evento no existe) |
+| DELETE | `/favoritos/:eventoId` | Quitar favorito (204, idempotente, 404 si el evento no existe) |
  
 - `orden` acepta `precio`, `fecha` y `puntaje`.
 - `puntajeOrganizador` se calcula como el promedio de todas las reseñas de
