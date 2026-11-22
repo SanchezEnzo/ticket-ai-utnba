@@ -28,3 +28,13 @@ export function pagarCompra(id, token) {
 export function listarMisCompras(token) {
   return request('GET', '/compras', { token });
 }
+
+/**
+ * Marca una compra CONFIRMADA como utilizada.
+ * @param {string} id
+ * @param {string} token
+ * @returns {Promise<Object>} La compra actualizada
+ */
+export function marcarUtilizada(id, token) {
+  return request('POST', `/compras/${id}/uso`, { token });
+}

@@ -205,9 +205,12 @@ function DetalleEventoScreen({ navigation }) {
           {/* Botón Comprar entradas */}
           <View style={styles.seccion}>
             {usuario && evento.organizador?.id === usuario.id ? (
-              <Text style={styles.avisoOrganizador}>
-                Sos el organizador de este evento
-              </Text>
+              <Boton
+                title="Ver compras"
+                onPress={() => {
+                  navigation.navigate('ComprasDelEvento', { eventoId });
+                }}
+              />
             ) : yaRealizado ? (
               <Text style={styles.avisoOrganizador}>
                 El evento ya se realizó

@@ -12,6 +12,8 @@ import MisEventosScreen from '../screens/MisEventosScreen.js';
 import CuentaScreen from '../screens/CuentaScreen.js';
 import DetalleEventoScreen from '../screens/DetalleEventoScreen.js';
 import CompraScreen from '../screens/CompraScreen.js';
+import CrearEventoScreen from '../screens/CrearEventoScreen.js';
+import ComprasDelEventoScreen from '../screens/ComprasDelEventoScreen.js';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -100,6 +102,36 @@ function AppNavigator() {
                 fontWeight: 'bold',
               },
               headerTitle: 'Comprar entradas',
+            }}
+          />
+          <Stack.Screen
+            name="CrearEvento"
+            component={CrearEventoScreen}
+            options={{
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: theme.colors.primario,
+              },
+              headerTintColor: '#FFFFFF',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              headerTitle: 'Crear evento',
+            }}
+          />
+          <Stack.Screen
+            name="ComprasDelEvento"
+            component={ComprasDelEventoScreen}
+            options={{
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: theme.colors.primario,
+              },
+              headerTintColor: '#FFFFFF',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              headerTitle: 'Compras del evento',
             }}
           />
         </>

@@ -38,3 +38,23 @@ export function listarCategorias(token) {
 export function listarResenias(eventoId, token) {
   return request('GET', `/eventos/${eventoId}/resenias`, { token });
 }
+
+/**
+ * Crea un nuevo evento.
+ * @param {{ nombre: string, descripcion: string, categoriaId: string, fecha: string, multimedia?: string[], tiposEntrada: Array<{nombre: string, descripcion: string, precio: number, cupo: number}> }} datos
+ * @param {string} token
+ * @returns {Promise<Object>} El evento creado
+ */
+export function crearEvento(datos, token) {
+  return request('POST', '/eventos', { body: datos, token });
+}
+
+/**
+ * Lista las compras de un evento (vista del organizador).
+ * @param {string} eventoId
+ * @param {string} token
+ * @returns {Promise<Object>} Resumen con entradas disponibles y lista de compras
+ */
+export function listarComprasDelEvento(eventoId, token) {
+  return request('GET', `/eventos/${eventoId}/compras`, { token });
+}
