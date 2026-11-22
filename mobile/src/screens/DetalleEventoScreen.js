@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, Image, StyleSheet, ActivityIndicator,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import Pantalla from '../components/Pantalla.js';
 import Cargando from '../components/Cargando.js';
 import ErrorMensaje from '../components/ErrorMensaje.js';
@@ -11,12 +11,13 @@ import { useSession } from '../context/SessionContext.js';
 import { obtenerEvento as apiObtenerEvento } from '../api/eventos.js';
 import { listarResenias as apiListarResenias } from '../api/eventos.js';
 import { formatearFechaHora, formatearPrecio, formatearFecha } from '../utils/formato.js';
+import Boton from '../components/Boton.js';
 import theme from '../theme.js';
 
 function DetalleEventoScreen({ navigation }) {
   const route = useRoute();
   const { eventoId } = route.params;
-  const { token } = useSession();
+  const { token, usuario } = useSession();
 
   const [evento, setEvento] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,12 +27,10 @@ function DetalleEventoScreen({ navigation }) {
   const [reseniasLoading, setReseniasLoading] = useState(true);
   const [reseniasError, setReseniasError] = useState(null);
 
-  useEffect(() => {
+  const cargarEvento = useCallback(() => {
     if (!token) return;
-
     setLoading(true);
     setError(null);
-
     apiObtenerEvento(eventoId, token)
       .then((resultado) => {
         setEvento(resultado);
@@ -43,6 +42,17 @@ function DetalleEventoScreen({ navigation }) {
         setLoading(false);
       });
   }, [token, eventoId]);
+
+  useEffect(() => {
+    cargarEvento();
+  }, [cargarEvento]);
+
+  // Refrescar al volver al detalle (después de comprar)
+  useFocusEffect(
+    useCallback(() => {
+      cargarEvento();
+    }, [cargarEvento])
+  );
 
   useEffect(() => {
     if (!token) return;
@@ -192,6 +202,29 @@ function DetalleEventoScreen({ navigation }) {
             ))}
           </View>
 
+          {/* Botón Comprar entradas */}
+          <View style={styles.seccion}>
+            {usuario && evento.organizador?.id === usuario.id ? (
+              <Text style={styles.avisoOrganizador}>
+                Sos el organizador de este evento
+              </Text>
+            ) : yaRealizado ? (
+              <Text style={styles.avisoOrganizador}>
+                El evento ya se realizó
+              </Text>
+            ) : (
+              <Boton
+                title="Comprar entradas"
+                onPress={() => {
+                  navigation.navigate('Compra', {
+                    eventoId,
+                    tiposEntrada: evento.tiposEntrada,
+                  });
+                }}
+              />
+            )}
+          </View>
+
           {/* Reseñas del organizador */}
           <View style={styles.seccion}>
             <Text style={styles.seccionTitulo}>Reseñas del organizador</Text>
@@ -325,6 +358,13 @@ const styles = StyleSheet.create({
     ...theme.texto.small,
     color: theme.colors.error,
     fontWeight: '500',
+  },
+  avisoOrganizador: {
+    ...theme.texto.medium,
+    color: theme.colors.textoSecundario,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: theme.espaciados.md,
   },
   reseniasCargando: {
     padding: theme.espaciados.md,

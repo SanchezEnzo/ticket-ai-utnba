@@ -4,7 +4,14 @@ import theme from '../theme.js';
 function Boton({ title, onPress, loading, disabled, variant = 'primary' }) {
   const isDisabled = disabled || loading;
 
-  const colorFondo = variant === 'primary' ? theme.colors.primario : theme.colors.error;
+  let colorFondo;
+  if (variant === 'primary') {
+    colorFondo = theme.colors.primario;
+  } else if (variant === 'secondary') {
+    colorFondo = theme.colors.textoSecundario;
+  } else {
+    colorFondo = theme.colors.error;
+  }
 
   return (
     <TouchableOpacity
