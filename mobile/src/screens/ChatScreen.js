@@ -175,7 +175,7 @@ function ChatScreen({ navigation }) {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardContainer}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 140}
       >
         {error && mensajes.length > 0 && (
           <ErrorMensaje message={error} onPress={handleReintentar} />
