@@ -58,6 +58,7 @@ function LoginScreen() {
           onChangeText={setPassword}
           placeholder="••••••••"
           secureTextEntry
+          showPasswordToggle
         />
 
         {error && (

@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   crearButton: {
     marginTop: theme.espaciados.lg,
-    width: '100%',
+    width: '50%',
   },
   verComprasButton: {
     paddingVertical: theme.espaciados.sm,
