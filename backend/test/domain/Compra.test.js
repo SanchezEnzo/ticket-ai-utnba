@@ -735,4 +735,387 @@ describe('Compra', () => {
       assert.ok(resp.historial.length >= 1);
     });
   });
+
+  describe('enviarMensaje', () => {
+    it('inicializa mensajes como arreglo vacío', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      assert.ok(Array.isArray(compra.mensajes));
+      assert.equal(compra.mensajes.length, 0);
+    });
+
+    it('el comprador puede enviar un mensaje', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      const mensaje = compra.enviarMensaje(comprador, 'Hola, consulta sobre la entrada');
+      assert.equal(mensaje.texto, 'Hola, consulta sobre la entrada');
+      assert.equal(mensaje.autor.id, comprador.id);
+      assert.ok(mensaje.fechaHora instanceof Date);
+      assert.equal(compra.mensajes.length, 1);
+    });
+
+    it('el organizador puede enviar un mensaje', () => {
+      const { comprador, organizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      const mensaje = compra.enviarMensaje(organizador, 'Bienvenido al evento');
+      assert.equal(mensaje.autor.id, organizador.id);
+      assert.equal(compra.mensajes.length, 1);
+    });
+
+    it('un tercero no puede enviar mensaje', () => {
+      const { comprador, otroUsuario, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      assert.throws(
+        () => compra.enviarMensaje(otroUsuario, 'No debo poder enviar'),
+        ForbiddenError,
+      );
+      assert.equal(compra.mensajes.length, 0);
+    });
+
+    it('otro organizador no puede enviar mensaje', () => {
+      const { comprador, otroOrganizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      assert.throws(
+        () => compra.enviarMensaje(otroOrganizador, 'No debo poder enviar'),
+        ForbiddenError,
+      );
+    });
+
+    it('el texto se limpia con trim', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      const mensaje = compra.enviarMensaje(comprador, '  texto con espacios  ');
+      assert.equal(mensaje.texto, 'texto con espacios');
+    });
+
+    it('texto vacío lanza ValidationError', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      assert.throws(
+        () => compra.enviarMensaje(comprador, '   '),
+        ValidationError,
+      );
+    });
+
+    it('texto de 1001 caracteres lanza ValidationError', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      const textoLargo = 'a'.repeat(1001);
+      assert.throws(
+        () => compra.enviarMensaje(comprador, textoLargo),
+        ValidationError,
+      );
+    });
+
+    it('texto de exactamente 1000 caracteres es válido', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      const texto = 'a'.repeat(1000);
+      const mensaje = compra.enviarMensaje(comprador, texto);
+      assert.equal(mensaje.texto.length, 1000);
+    });
+
+    it('se puede enviar en estado PENDIENTE', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Mensaje PENDIENTE');
+      assert.equal(compra.mensajes.length, 1);
+    });
+
+    it('se puede enviar en estado CONFIRMADA', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.actualizarEstado(EstadoCompra.CONFIRMADA, comprador);
+      compra.enviarMensaje(comprador, 'Mensaje CONFIRMADA');
+      assert.equal(compra.mensajes.length, 1);
+    });
+
+    it('se puede enviar en estado UTILIZADA', () => {
+      const { comprador, organizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.actualizarEstado(EstadoCompra.CONFIRMADA, comprador);
+      compra.actualizarEstado(EstadoCompra.UTILIZADA, organizador);
+      compra.enviarMensaje(comprador, 'Mensaje UTILIZADA');
+      assert.equal(compra.mensajes.length, 1);
+    });
+
+    it('se puede enviar en estado CANCELADA', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.actualizarEstado(EstadoCompra.CANCELADA, comprador);
+      compra.enviarMensaje(comprador, 'Mensaje CANCELADA');
+      assert.equal(compra.mensajes.length, 1);
+    });
+
+    it('se puede enviar en estado REEMBOLSADA', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.actualizarEstado(EstadoCompra.CONFIRMADA, comprador);
+      compra.actualizarEstado(EstadoCompra.CANCELADA, comprador);
+      assert.equal(compra.estado, EstadoCompra.REEMBOLSADA);
+      compra.enviarMensaje(comprador, 'Mensaje REEMBOLSADA');
+      assert.equal(compra.mensajes.length, 1);
+    });
+
+    it('fechas estrictamente crecientes con fijarAhora', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+
+      fijarAhora(new Date('2026-01-01T00:00:00Z'));
+      const m1 = compra.enviarMensaje(comprador, 'Primer mensaje');
+
+      // Sin avanzar el reloj, el segundo mensaje debe ser +1ms
+      const m2 = compra.enviarMensaje(comprador, 'Segundo mensaje');
+      assert.ok(m2.fechaHora.getTime() > m1.fechaHora.getTime());
+      assert.equal(m2.fechaHora.getTime() - m1.fechaHora.getTime(), 1);
+    });
+
+    it('el ID del mensaje es único', () => {
+      const { comprador, organizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      const m1 = compra.enviarMensaje(comprador, 'Uno');
+      const m2 = compra.enviarMensaje(organizador, 'Dos');
+      assert.notEqual(m1.id, m2.id);
+    });
+
+    it('enviar mensaje no cambia estado ni historial', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      const estadoAntes = compra.estado;
+      const historialAntes = compra.historial.length;
+      compra.enviarMensaje(comprador, 'Sin efecto');
+      assert.equal(compra.estado, estadoAntes);
+      assert.equal(compra.historial.length, historialAntes);
+    });
+  });
+
+  describe('leerMensajes', () => {
+    it('el comprador puede leer mensajes', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Hola');
+      const mensajes = compra.leerMensajes(comprador);
+      assert.equal(mensajes.length, 1);
+    });
+
+    it('el organizador puede leer mensajes', () => {
+      const { comprador, organizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Hola');
+      const mensajes = compra.leerMensajes(organizador);
+      assert.equal(mensajes.length, 1);
+    });
+
+    it('un tercero no puede leer mensajes', () => {
+      const { comprador, otroUsuario, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Secreto');
+      assert.throws(
+        () => compra.leerMensajes(otroUsuario),
+        ForbiddenError,
+      );
+    });
+
+    it('sin desde devuelve todos los mensajes', () => {
+      const { comprador, organizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Uno');
+      compra.enviarMensaje(organizador, 'Dos');
+      compra.enviarMensaje(comprador, 'Tres');
+      const mensajes = compra.leerMensajes(comprador);
+      assert.equal(mensajes.length, 3);
+    });
+
+    it('con desde devuelve solo mensajes estrictamente posteriores', () => {
+      const { comprador, organizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Uno');
+      const fechaDesde = compra.mensajes[0].fechaHora;
+      compra.enviarMensaje(organizador, 'Dos');
+      compra.enviarMensaje(comprador, 'Tres');
+
+      const mensajes = compra.leerMensajes(comprador, fechaDesde);
+      assert.equal(mensajes.length, 2);
+      assert.equal(mensajes[0].texto, 'Dos');
+      assert.equal(mensajes[1].texto, 'Tres');
+    });
+
+    it('los mensajes están ordenados cronológicamente', () => {
+      const { comprador, organizador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(organizador, 'Organizador primero');
+      compra.enviarMensaje(comprador, 'Comprador segundo');
+      const mensajes = compra.leerMensajes(comprador);
+      assert.equal(mensajes[0].autor.id, organizador.id);
+      assert.equal(mensajes[1].autor.id, comprador.id);
+    });
+
+    it('leer sin desde ni desde devuelve todos', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Solo uno');
+      const mensajes = compra.leerMensajes(comprador, undefined);
+      assert.equal(mensajes.length, 1);
+    });
+
+    it('leer con desde después del último devuelve vacío', () => {
+      const { comprador, evento, tipoGeneral } = crearFixture();
+      const compra = Compra.crear({
+        id: 'cp_1',
+        comprador,
+        evento,
+        tipoEntrada: tipoGeneral,
+        cantidad: 1,
+      });
+      compra.enviarMensaje(comprador, 'Ultimo');
+      const ultimo = compra.mensajes[0].fechaHora;
+      const desdeFuturo = new Date(ultimo.getTime() + 1000);
+      const mensajes = compra.leerMensajes(comprador, desdeFuturo);
+      assert.equal(mensajes.length, 0);
+    });
+  });
 });

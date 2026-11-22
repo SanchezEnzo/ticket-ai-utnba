@@ -10,6 +10,8 @@ import { EventoController } from '../../src/controllers/EventoController.js';
 import { CompraRepository } from '../../src/repositories/CompraRepository.js';
 import { CompraService } from '../../src/services/CompraService.js';
 import { CompraController } from '../../src/controllers/CompraController.js';
+import { MensajeService } from '../../src/services/MensajeService.js';
+import { MensajeController } from '../../src/controllers/MensajeController.js';
 import { seedUsuarios } from '../../src/seed/usuarios.js';
 import { seedCategorias, seedEventos } from '../../src/seed/eventos.js';
 import { seedCompras } from '../../src/seed/compras.js';
@@ -43,16 +45,18 @@ export async function crearApp() {
     usuarioRepository,
   });
   const compraService = new CompraService({ compraRepository, eventoRepository });
+  const mensajeService = new MensajeService({ compraRepository });
 
   // 3. Controllers
   const authController = new AuthController({ authService });
   const eventoController = new EventoController({ eventoService, compraService });
   const compraController = new CompraController({ compraService });
+  const mensajeController = new MensajeController({ mensajeService });
 
   const app = crearAppExpress({
     repositorios: { usuarioRepository, categoriaRepository, eventoRepository, compraRepository },
-    servicios: { sesionService, authService, eventoService, compraService },
-    controllers: { authController, eventoController, compraController },
+    servicios: { sesionService, authService, eventoService, compraService, mensajeService },
+    controllers: { authController, eventoController, compraController, mensajeController },
   });
   const server = app.listen(0);
   const port = server.address().port;

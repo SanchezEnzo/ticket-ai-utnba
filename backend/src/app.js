@@ -40,6 +40,7 @@ function crearApp({ repositorios, servicios, controllers }) {
 
   const compraRoutes = crearRutasCompra({
     compraController: controllers.compraController,
+    mensajeController: controllers.mensajeController,
     authMiddleware,
   });
   app.use('/compras', compraRoutes);

@@ -6,8 +6,13 @@ import {
   compraIdParamsSchema,
   emptyQuerySchema,
 } from '../schemas/compras.js';
+import {
+  listarMensajesQuerySchema,
+  enviarMensajeBodySchema,
+  sinQuerySchema,
+} from '../schemas/mensaje.schema.js';
 
-function crearRutasCompra({ compraController, authMiddleware }) {
+function crearRutasCompra({ compraController, mensajeController, authMiddleware }) {
   const router = Router();
 
   router.post(
@@ -43,6 +48,20 @@ function crearRutasCompra({ compraController, authMiddleware }) {
     authMiddleware,
     validar({ params: compraIdParamsSchema, query: emptyQuerySchema }),
     asyncHandler(compraController.cancelar),
+  );
+
+  router.get(
+    '/:id/mensajes',
+    authMiddleware,
+    validar({ params: compraIdParamsSchema, query: listarMensajesQuerySchema }),
+    asyncHandler(mensajeController.listar),
+  );
+
+  router.post(
+    '/:id/mensajes',
+    authMiddleware,
+    validar({ params: compraIdParamsSchema, body: enviarMensajeBodySchema, query: sinQuerySchema }),
+    asyncHandler(mensajeController.enviar),
   );
 
   return router;

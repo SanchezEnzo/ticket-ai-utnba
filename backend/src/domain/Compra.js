@@ -49,7 +49,7 @@ const TRANSICIONES = {
 };
 
 class Compra {
-  constructor({ id, comprador, evento, tipoEntrada, cantidad, total, estado, historial }) {
+  constructor({ id, comprador, evento, tipoEntrada, cantidad, total, estado, historial, mensajes }) {
     this.id = id;
     this.comprador = comprador;
     this.evento = evento;
@@ -58,6 +58,7 @@ class Compra {
     this.total = total;
     this.estado = estado;
     this.historial = historial;
+    this.mensajes = mensajes || [];
   }
 
   static crear({ id, comprador, evento, tipoEntrada, cantidad }) {
@@ -104,6 +105,7 @@ class Compra {
       total,
       estado,
       historial,
+      mensajes: [],
     });
 
     // Actualizar referencia al objeto compra en el historial
@@ -165,6 +167,55 @@ class Compra {
     return Math.max(0, diasCalendario(ahora(), this.evento.fecha));
   }
 
+  _puedeAcceder(usuario) {
+    return usuario.id === this.comprador.id || usuario.id === this.evento.organizador.id;
+  }
+
+  enviarMensaje(usuario, texto) {
+    if (!this._puedeAcceder(usuario)) {
+      throw new ForbiddenError('No tienes permiso para enviar mensajes en esta compra.');
+    }
+
+    const textoLimpiado = texto.trim();
+    if (textoLimpiado.length < 1) {
+      throw new ValidationError('El mensaje no puede estar vacío.');
+    }
+    if (textoLimpiado.length > 1000) {
+      throw new ValidationError('El mensaje no puede exceder los 1000 caracteres.');
+    }
+
+    let fechaHora = ahora();
+    if (this.mensajes.length > 0) {
+      const ultimoMensaje = this.mensajes[this.mensajes.length - 1];
+      if (fechaHora.getTime() <= ultimoMensaje.fechaHora.getTime()) {
+        fechaHora = new Date(ultimoMensaje.fechaHora.getTime() + 1);
+      }
+    }
+
+    const mensaje = new Mensaje({
+      id: `msg-${this.id}-${this.mensajes.length + 1}`,
+      autor: { id: usuario.id, nombre: usuario.nombre },
+      texto: textoLimpiado,
+      fechaHora,
+    });
+
+    this.mensajes.push(mensaje);
+    return mensaje;
+  }
+
+  leerMensajes(usuario, desde) {
+    if (!this._puedeAcceder(usuario)) {
+      throw new ForbiddenError('No tienes permiso para leer mensajes de esta compra.');
+    }
+
+    let filtrados = this.mensajes;
+    if (desde) {
+      filtrados = this.mensajes.filter((m) => m.fechaHora.getTime() > desde.getTime());
+    }
+
+    return [...filtrados].sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
+  }
+
   paraRespuesta() {
     return {
       id: this.id,
@@ -199,4 +250,13 @@ class Compra {
   }
 }
 
-export { EstadoCompra, SISTEMA, crearCambioEstadoCompra, Compra };
+class Mensaje {
+  constructor({ id, autor, texto, fechaHora }) {
+    this.id = id;
+    this.autor = autor;
+    this.texto = texto;
+    this.fechaHora = fechaHora;
+  }
+}
+
+export { EstadoCompra, SISTEMA, crearCambioEstadoCompra, Compra, Mensaje };

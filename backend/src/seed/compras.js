@@ -40,6 +40,15 @@ function seedCompras(compraRepository, eventoRepository, usuarioRepository) {
     cantidad: 2,
   });
   compraConfirmada.actualizarEstado(EstadoCompra.CONFIRMADA, comprador1);
+
+  // Mensajes de ejemplo: intercambio entre comprador y organizador
+  const organizadorTeatro = evtTeatro1.organizador;
+  fijarAhora(sumarDias(ahora(), -2));
+  compraConfirmada.enviarMensaje(comprador1, 'Hola! Quería confirmar que asistiré al evento.');
+  compraConfirmada.enviarMensaje(organizadorTeatro, 'Perfecto! Las entradas están listas. Cualquier consulta, avisame.');
+  compraConfirmada.enviarMensaje(comprador1, 'Genial, muchas gracias!');
+  restaurarReloj();
+
   compraRepository.guardar(compraConfirmada);
 
   // 3. UTILIZADA: evt_pasado1, General, cantidad 1
@@ -89,6 +98,13 @@ function seedCompras(compraRepository, eventoRepository, usuarioRepository) {
   });
   compraReembolsada.actualizarEstado(EstadoCompra.CONFIRMADA, comprador1);
   compraReembolsada.actualizarEstado(EstadoCompra.CANCELADA, comprador1);
+
+  // Mensaje de ejemplo en compra REEMBOLSADA
+  const organizadorConferencia = evtConferencia1.organizador;
+  fijarAhora(sumarDias(ahora(), -1));
+  compraReembolsada.enviarMensaje(organizadorConferencia, 'Se te realizó el reembolso. Consultá tu cuenta bancaria.');
+  restaurarReloj();
+
   compraRepository.guardar(compraReembolsada);
 }
 

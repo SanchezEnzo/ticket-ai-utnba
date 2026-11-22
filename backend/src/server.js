@@ -10,6 +10,8 @@ import { EventoController } from './controllers/EventoController.js';
 import { CompraRepository } from './repositories/CompraRepository.js';
 import { CompraService } from './services/CompraService.js';
 import { CompraController } from './controllers/CompraController.js';
+import { MensajeService } from './services/MensajeService.js';
+import { MensajeController } from './controllers/MensajeController.js';
 import { seedUsuarios } from './seed/usuarios.js';
 import { seedCategorias, seedEventos } from './seed/eventos.js';
 import { seedCompras } from './seed/compras.js';
@@ -33,16 +35,18 @@ const eventoService = new EventoService({
   usuarioRepository,
 });
 const compraService = new CompraService({ compraRepository, eventoRepository });
+const mensajeService = new MensajeService({ compraRepository });
 
 // 3. Controllers
 const authController = new AuthController({ authService });
 const eventoController = new EventoController({ eventoService });
 const compraController = new CompraController({ compraService });
+const mensajeController = new MensajeController({ mensajeService });
 
 const app = crearApp({
   repositorios: { usuarioRepository, categoriaRepository, eventoRepository, compraRepository },
-  servicios: { sesionService, authService, eventoService, compraService },
-  controllers: { authController, eventoController, compraController },
+  servicios: { sesionService, authService, eventoService, compraService, mensajeService },
+  controllers: { authController, eventoController, compraController, mensajeController },
 });
 
 const port = process.env.PORT || 3000;
