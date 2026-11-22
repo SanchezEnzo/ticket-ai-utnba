@@ -1,10 +1,10 @@
 # Arquitectura: AI Ticket It
-
+ 
 Decisiones técnicas del proyecto. Las reglas de negocio están en
 `docs/business-context.md`; acá solo se define **cómo** se construye.
-
+ 
 ## 1. Stack
-
+ 
 - **Backend** (`backend/`): Node.js + Express, JavaScript, API REST.
   Persistencia en memoria, sin base de datos.
 - **Mobile** (`mobile/`): React Native con Expo, corriendo en un dispositivo
@@ -12,9 +12,8 @@ Decisiones técnicas del proyecto. Las reglas de negocio están en
 - Dependencias del backend aprobadas: `express` y `zod`. Cualquier otra se
   consulta antes de agregarla.
   Gestor de paquetes: pnpm (no usar npm ni yarn). Las dependencias se agregan con versión exacta: pnpm add --save-exact.
-
 ## 2. Convenciones
-
+ 
 - Las entidades de dominio se nombran en español, como en el diagrama del
   TP: `Evento`, `TipoEntrada`, `Compra`, `Usuario`, `Resenia`, etc.
 - Las carpetas y capas técnicas se nombran en inglés: `controllers`,
@@ -26,21 +25,19 @@ Decisiones técnicas del proyecto. Las reglas de negocio están en
   lo que permite fijar el tiempo en los tests (`fijarAhora`, `restaurarReloj`).
   `diasCalendario(desde, hasta)` cuenta días de calendario en hora de Buenos
   Aires (`America/Argentina/Buenos_Aires`).
-
 ## 3. Backend
-
+ 
 ### Capas y dependencias
-
+ 
 ```
 routes → controllers → services → domain
                           ↓
                     repositories (interfaz + implementación en memoria)
 ```
-
+ 
 - Cada capa solo conoce a la de su derecha. El dominio no conoce a nadie.
 - Las rutas aplican, antes del controller, el middleware de autenticación y
   el de validación (ver "Validación de requests").
-
 | Capa | Responsabilidad | No debe hacer |
 |---|---|---|
 | routes | Asociar URL y método HTTP a un controller, aplicando autenticación y validación | Lógica |
@@ -48,11 +45,11 @@ routes → controllers → services → domain
 | services | Orquestar casos de uso, usar repositorios y verificar el **acceso a recursos** (por ejemplo, ¿es el organizador de este evento para ver sus compras?) | Reglas de estados o de cupo, y permisos que forman parte de una transición de estado |
 | domain | Reglas de negocio dentro de las entidades, incluidos los permisos de cada transición de estado (quién puede cambiar el estado de una compra) | Conocer HTTP ni repositorios |
 | repositories | Guardar y buscar entidades | Reglas de negocio |
-
+ 
 ### Dominio rico
-
+ 
 La lógica vive en las entidades, no en los services:
-
+ 
 - `TipoEntrada`: tiene `cupo` (total) y `cupoDisponible`. Métodos
   `hayCupoPara(cantidad)`, `reservar(cantidad)`, `liberar(cantidad)`. El cupo
   disponible nunca queda negativo ni supera el cupo total.
@@ -68,6 +65,29 @@ La lógica vive en las entidades, no en los services:
     REEMBOLSADA, quién = `SISTEMA`).
   - `diasParaEvento()` devuelve los días que faltan solo si está CONFIRMADA.
   - Un cambio que falla no deja rastro (ni estado, ni cupo, ni historial).
+  - **Chat de la compra:**
+    - `enviarMensaje(usuario, texto)` permite al comprador u organizador
+      agregar un mensaje a la compra. Valida acceso (`ForbiddenError` si no
+      es comprador ni organizador), valida texto (trim, no vacío, máx 1000
+      caracteres, `ValidationError`), y asigna `fechaHora` con `ahora()`.
+      Garantiza fechas estrictamente crecientes: si `ahora()` es menor o
+      igual al último mensaje, usa último + 1 ms. No cambia estado, cupo ni
+      historial. Se puede enviar en cualquier estado de la compra.
+    - `leerMensajes(usuario, desde)` devuelve los mensajes ordenados
+      cronológicamente. Mismo control de acceso que `enviarMensaje`. Si se
+      pasa `desde` (Date), filtra solo los mensajes estrictamente posteriores.
+    - **Control de acceso en el dominio:** igual que los permisos de
+      `actualizarEstado`, quién puede escribir o leer el chat es una regla
+      de la entidad `Compra`. Es la excepción acordada a "el service
+      verifica el acceso a recursos": los services del chat no repiten esta
+      verificación.
+    - Los mensajes son instancias de la clase de dominio `Mensaje`
+      (`{ id, autor, texto, fechaHora }`), almacenadas en `Compra.mensajes`.
+      `autor` es una referencia mínima `{ id, nombre }` al usuario, nunca el
+      objeto `Usuario` completo (para no arrastrar el hash de contraseña ni
+      otros datos). `Mensaje` no tiene repositorio propio; se persiste como
+      parte de la compra.
+    - `paraRespuesta()` NO incluye los mensajes.
 - `Evento`: `tuPrecioEstaEntre(min, max)`, `precioDesde()`, `yaSeRealizo()`,
   `esOrganizadoPor(usuario)`.
 - `SISTEMA`: constante que representa al sistema como actor de los cambios
@@ -76,19 +96,18 @@ La lógica vive en las entidades, no en los services:
   incorrecto, `ForbiddenError`. Nunca se ignoran.
 - Los schemas de Zod no reemplazan estas validaciones: el dominio protege
   sus invariantes aunque no lo llamen desde la API.
-
 ### Entidades
-
+ 
 Las del diagrama del TP: `Usuario`, `Evento`, `Categoria`, `TipoEntrada`,
 `Compra`, `EstadoCompra` (enum), `CambioEstadoCompra`, `Mensaje`, `Resenia`.
-
+ 
 - Los ids son strings generados en el backend.
 - Las fechas viajan como string ISO 8601.
 - Los montos son números (`Number`).
-- `Resenia` tiene su propio repositorio, `Mensaje` esta embebido en `Compra`.
-
+- `Resenia` tiene su propio repositorio; `Mensaje` (clase de dominio) está
+  embebido en `Compra`, igual que `CambioEstadoCompra`.
 ### Persistencia en memoria
-
+ 
 - Cada repositorio tiene una interfaz (métodos como `guardar`, `buscarPorId`,
   `listarPorComprador`, `listarPorEvento`) y una implementación sobre `Map` o arrays.
 - Al arrancar, un módulo de seed carga datos de ejemplo: usuarios,
@@ -96,9 +115,8 @@ Las del diagrama del TP: `Usuario`, `Evento`, `Categoria`, `TipoEntrada`,
   estados. El seed es un script determinístico, siempre igual, con fechas
   relativas a `ahora()`.
 - No hay registro de usuarios: existen solo los del seed.
-
 ### Autenticación
-
+ 
 - `POST /auth/login` recibe email y contraseña y devuelve un token.
 - `GET /auth/yo` devuelve el usuario autenticado.
 - Los tokens son strings aleatorios guardados en un `Map` en
@@ -106,9 +124,8 @@ Las del diagrama del TP: `Usuario`, `Evento`, `Categoria`, `TipoEntrada`,
 - Un middleware de autenticación pone al usuario en `req.usuario`.
 - Las contraseñas se guardan con hash usando el módulo `crypto`
   de Node, y nunca se devuelven en una respuesta.
-
 ### Validación de requests
-
+ 
 - Todo lo que llega en la request (`params`, `query` y `body`) se valida con
   schemas de Zod antes de llegar al controller.
 - Cada endpoint tiene su schema, definido en `src/schemas/` (un archivo por
@@ -135,9 +152,17 @@ Las del diagrama del TP: `Usuario`, `Evento`, `Categoria`, `TipoEntrada`,
 - Si la validación falla, el propio middleware `validar` lanza un
   `ValidationError` (ver "Manejo de errores"). El middleware de errores no
   conoce a Zod.
-
+- **Mensajes del chat:**
+  - `POST /compras/:id/mensajes`: el schema de body es `.strict()` y solo
+    exige que `texto` sea un string (sin coerción). Las reglas sobre el
+    contenido (trim, no vacío, máx 1000 caracteres) viven **solo en el
+    dominio** (`enviarMensaje`), que lanza `ValidationError`. Así no hay dos
+    validaciones del mismo límite.
+  - `GET /compras/:id/mensajes?desde=`: el schema de query convierte `desde`
+    con `z.coerce.date()` (opcional). Una fecha inválida es un 400
+    `VALIDATION_ERROR` generado por Zod; el dominio siempre recibe un `Date`.
 ### Manejo de errores
-
+ 
 - Las reglas de negocio lanzan errores de dominio (clases que extienden
   `DomainError`: `NotFoundError`, `ValidationError`, `ForbiddenError`,
   `ConflictError`, `UnauthorizedError`). Nunca devuelven códigos HTTP ni usan `res`.
@@ -146,7 +171,6 @@ Las del diagrama del TP: `Usuario`, `Evento`, `Categoria`, `TipoEntrada`,
 - Un único middleware de errores, registrado al final de `app.js`, traduce
   cada tipo de error a su status HTTP y responde siempre con el mismo
   formato: `{ "error": { "code": "...", "message": "..." } }`.
-
 | Error | Status | Cuándo |
 |---|---|---|
 | `ValidationError` | 400 | Datos mal formados o fuera de rango (incluye los fallos de Zod, con `code` `VALIDATION_ERROR`, y el `message` resume los campos inválidos) |
@@ -155,13 +179,12 @@ Las del diagrama del TP: `Usuario`, `Evento`, `Categoria`, `TipoEntrada`,
 | `NotFoundError` | 404 | El recurso no existe (también rutas inexistentes) |
 | `ConflictError` | 409 | Transición de estado inválida, sin cupo, evento ya realizado |
 | desconocido | 500 | Sin exponer detalles internos |
-
+ 
 - Un JSON mal formado en el body responde 400 con el mismo formato.
-
 ### Endpoints
-
+ 
 Todos requieren autenticación salvo el login.
-
+ 
 | Método | Ruta | Descripción |
 |---|---|---|
 | POST | `/auth/login` | Iniciar sesión |
@@ -183,13 +206,12 @@ Todos requieren autenticación salvo el login.
 | GET | `/favoritos` | Mis favoritos |
 | PUT | `/favoritos/:eventoId` | Marcar favorito |
 | DELETE | `/favoritos/:eventoId` | Quitar favorito |
-
+ 
 - `orden` acepta `precio`, `fecha` y `puntaje`.
 - Los cambios de estado son acciones (`/pago`, `/uso`, `/cancelacion`) y no
   un `PUT` genérico de estado, para que cada regla tenga su propio endpoint.
-
 ### Mensajería (chat de la compra)
-
+ 
 - Se implementa con API REST. No hay conexiones persistentes (sin WebSockets
   ni SSE).
 - El front actualiza la conversación con polling cada 60 segundos.
@@ -199,9 +221,14 @@ Todos requieren autenticación salvo el login.
 - Front: el polling se inicia al abrir la pantalla del chat y se cancela al
   salir (limpieza del intervalo). Además se refresca de inmediato al abrir
   la pantalla y después de enviar un mensaje.
-
+- Front: guarda la `fechaHora` del último mensaje recibido y la usa como
+  `desde` en el siguiente pedido (polling, refresco al abrir y refresco
+  tras enviar). Al agregar mensajes a la lista, descarta los que ya tiene
+  por `id`, para no duplicar en pantalla.
+- Limitación aceptada: no hay paginación ni tope de mensajes por compra
+  (persistencia en memoria, uso de un TP).
 ### Estructura de carpetas
-
+ 
 ```
 backend/
   src/
@@ -217,9 +244,9 @@ backend/
     seed/               # datos de ejemplo
   test/
 ```
-
+ 
 ### Clases e inyección de dependencias
-
+ 
 - Controllers y services son **clases**. Los repositorios ya lo son.
 - Las dependencias se inyectan por constructor, recibiendo un único objeto:
   `new AuthService({ usuarioRepository, sesionService })`.
@@ -233,18 +260,16 @@ backend/
   funciones factory.
 - Los services lanzan errores de dominio; los controllers no tienen
   try/catch propio.
-
 ## 4. Mobile
-
+ 
 - Expo con React Native.
 - Navegación con React Navigation.
 - El front no contiene reglas de negocio: muestra lo que devuelve la API y
   maneja el estado de las pantallas. Si una acción no corresponde (por
   ejemplo, cancelar una compra UTILIZADA), el front puede ocultar el botón,
   pero la validación real vive en el backend.
-
 ### Estructura de carpetas
-
+ 
 ```
 mobile/
   src/
@@ -255,16 +280,16 @@ mobile/
     context/        # sesión del usuario (token y datos)
     hooks/          # por ejemplo usePolling
 ```
-
+ 
 ### Conexión con el backend
-
+ 
 - El celular se conecta al backend por la IP de la PC en la red local, no
   por `localhost`.
 - La URL base se configura con una variable de entorno de Expo
   (`EXPO_PUBLIC_API_URL`), nunca escrita a mano en el código.
 - Los errores de la API se muestran al usuario con el `message` que viene en
   el formato de error unificado.
-
 ## 5. Validación
-
+ 
 Cómo correr y probar el proyecto está en `docs/testing.md`.
+ 
