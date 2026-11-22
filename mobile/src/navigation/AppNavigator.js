@@ -10,6 +10,7 @@ import FavoritosScreen from '../screens/FavoritosScreen.js';
 import ComprasScreen from '../screens/ComprasScreen.js';
 import MisEventosScreen from '../screens/MisEventosScreen.js';
 import CuentaScreen from '../screens/CuentaScreen.js';
+import DetalleEventoScreen from '../screens/DetalleEventoScreen.js';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -68,7 +69,24 @@ function AppNavigator() {
       {!isLoggedIn ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : (
-        <Stack.Screen name="Main" component={TabNavigator} />
+        <>
+          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen
+            name="Detalle"
+            component={DetalleEventoScreen}
+            options={{
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: theme.colors.primario,
+              },
+              headerTintColor: '#FFFFFF',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              headerTitle: 'Detalle del evento',
+            }}
+          />
+        </>
       )}
     </Stack.Navigator>
   );

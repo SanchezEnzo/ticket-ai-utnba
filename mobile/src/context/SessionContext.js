@@ -3,7 +3,7 @@ import { login as apiLogin } from '../api/auth.js';
 
 const SessionContext = createContext(null);
 
-function SessionProvider({ children }) {
+function SessionProvider({ children, onLoginSuccess, onLogout }) {
   const [usuario, setUsuario] = useState(null);
   const [token, setToken] = useState(null);
   const [avisoSesion, setAvisoSesion] = useState(null);
@@ -14,6 +14,9 @@ function SessionProvider({ children }) {
       setToken(newToken);
       setUsuario(newUser);
       setAvisoSesion(null);
+      if (onLoginSuccess) {
+        onLoginSuccess(newToken);
+      }
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -23,12 +26,18 @@ function SessionProvider({ children }) {
   const logout = () => {
     setUsuario(null);
     setToken(null);
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const cerrarSesionConAviso = () => {
     setUsuario(null);
     setToken(null);
     setAvisoSesion('Tu sesión expiró. Ingresá nuevamente.');
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const value = {

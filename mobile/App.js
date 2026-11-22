@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { isConfigured } from './src/config.js';
 import { SessionProvider } from './src/context/SessionContext.js';
+import { FavoritosProvider, useFavoritos } from './src/context/FavoritosContext.js';
 import AppNavigator from './src/navigation/AppNavigator.js';
 import useNavigationWithAuth from './src/hooks/useNavigationWithAuth.js';
 import theme from './src/theme.js';
@@ -58,14 +60,35 @@ function AppContent() {
   );
 }
 
+function FavoritosSyncBridge() {
+  const { cargarFavoritos, limpiar } = useFavoritos();
+
+  const handleLoginSuccess = useCallback(
+    (token) => {
+      cargarFavoritos(token);
+    },
+    [cargarFavoritos]
+  );
+
+  const handleLogout = useCallback(() => {
+    limpiar();
+  }, [limpiar]);
+
+  return (
+    <SessionProvider onLoginSuccess={handleLoginSuccess} onLogout={handleLogout}>
+      <AppContent />
+    </SessionProvider>
+  );
+}
+
 export default function App() {
   if (!isConfigured()) {
     return <ConfigErrorScreen />;
   }
 
   return (
-    <SessionProvider>
-      <AppContent />
-    </SessionProvider>
+    <FavoritosProvider>
+      <FavoritosSyncBridge />
+    </FavoritosProvider>
   );
 }
