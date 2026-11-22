@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, StyleSheet, RefreshControl, Alert,
+  View, Text, FlatList, StyleSheet, RefreshControl, Alert, TouchableOpacity,
 } from 'react-native';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import Pantalla from '../components/Pantalla.js';
 import Boton from '../components/Boton.js';
 import Cargando from '../components/Cargando.js';
@@ -33,7 +34,7 @@ function EntradaDisponibleCard({ tipo }) {
   );
 }
 
-function CompraCard({ compra, onMarcarUtilizada }) {
+function CompraCard({ compra, onMarcarUtilizada, onOpenChat }) {
   return (
     <View style={styles.compraCard}>
       <View style={styles.compraHeader}>
@@ -52,6 +53,18 @@ function CompraCard({ compra, onMarcarUtilizada }) {
         <EstadoBadge estado={compra.estado} />
         <Text style={styles.compraFecha}>{formatearFechaHora(compra.fecha)}</Text>
       </View>
+
+      {/* Botón Mensajes */}
+      {onOpenChat && (
+        <TouchableOpacity
+          style={styles.mensajesBoton}
+          onPress={() => onOpenChat(compra)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chatbubble-outline" size={18} color={theme.colors.primario} />
+          <Text style={styles.mensajesBotonText}>Mensajes</Text>
+        </TouchableOpacity>
+      )}
 
       {compra.estado === 'CONFIRMADA' && (
         <View style={styles.marcarContainer}>
@@ -143,6 +156,17 @@ function ComprasDelEventoScreen({ navigation }) {
     [token, cargarDatos]
   );
 
+  const handleOpenChat = useCallback(
+    (compra) => {
+      const nombreComprador = `${compra.comprador?.nombre} ${compra.comprador?.apellido || ''}`.trim();
+      navigation.navigate('Chat', {
+        compraId: compra.id,
+        titulo: `${datos?.evento?.nombre} — ${nombreComprador}`,
+      });
+    },
+    [navigation, datos]
+  );
+
   if (loading) {
     return (
       <Pantalla>
@@ -200,6 +224,7 @@ function ComprasDelEventoScreen({ navigation }) {
           <CompraCard
             compra={item}
             onMarcarUtilizada={handleMarcarUtilizada}
+            onOpenChat={handleOpenChat}
           />
         )}
         contentContainerStyle={styles.listContent}
@@ -311,6 +336,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.espaciados.sm,
     marginBottom: theme.espaciados.sm,
+  },
+  mensajesBoton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.espaciados.xs,
+    paddingVertical: theme.espaciados.xs,
+    paddingHorizontal: theme.espaciados.sm,
+    alignSelf: 'flex-start',
+    marginBottom: theme.espaciados.sm,
+  },
+  mensajesBotonText: {
+    ...theme.texto.small,
+    color: theme.colors.primario,
+    fontWeight: '600',
   },
   compraFecha: {
     ...theme.texto.small,

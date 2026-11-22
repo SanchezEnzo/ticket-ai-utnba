@@ -3,6 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import Pantalla from '../components/Pantalla.js';
 import Boton from '../components/Boton.js';
 import Cargando from '../components/Cargando.js';
@@ -15,7 +16,7 @@ import { pagarCompra as apiPagarCompra } from '../api/compras.js';
 import { formatearPrecio, formatearFechaHora, textoDias } from '../utils/formato.js';
 import theme from '../theme.js';
 
-function CompraCard({ compra, onPagar }) {
+function CompraCard({ compra, onPagar, onOpenChat }) {
   const [historialVisible, setHistorialVisible] = useState(false);
 
   return (
@@ -43,6 +44,18 @@ function CompraCard({ compra, onPagar }) {
           </Text>
         )}
       </View>
+
+      {/* Botón Mensajes */}
+      {onOpenChat && (
+        <TouchableOpacity
+          style={styles.mensajesBoton}
+          onPress={() => onOpenChat(compra)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chatbubble-outline" size={18} color={theme.colors.primario} />
+          <Text style={styles.mensajesBotonText}>Mensajes</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Botón Pagar para PENDIENTE */}
       {compra.estado === 'PENDIENTE' && (
@@ -149,6 +162,16 @@ function ComprasScreen({ navigation }) {
     [token, cargarCompras]
   );
 
+  const handleOpenChat = useCallback(
+    (compra) => {
+      navigation.navigate('Chat', {
+        compraId: compra.id,
+        titulo: compra.evento?.nombre || 'Chat',
+      });
+    },
+    [navigation]
+  );
+
   if (loading) {
     return (
       <Pantalla>
@@ -185,6 +208,7 @@ function ComprasScreen({ navigation }) {
           <CompraCard
             compra={item}
             onPagar={handlePagar}
+            onOpenChat={handleOpenChat}
           />
         )}
         contentContainerStyle={styles.listContent}
@@ -251,6 +275,19 @@ const styles = StyleSheet.create({
   },
   pagarContainer: {
     marginTop: theme.espaciados.sm,
+  },
+  mensajesBoton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.espaciados.xs,
+    paddingVertical: theme.espaciados.xs,
+    paddingHorizontal: theme.espaciados.sm,
+    alignSelf: 'flex-start',
+  },
+  mensajesBotonText: {
+    ...theme.texto.small,
+    color: theme.colors.primario,
+    fontWeight: '600',
   },
   historialContainer: {
     marginTop: theme.espaciados.sm,
