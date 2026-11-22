@@ -195,7 +195,8 @@ Preferir 1 para las reglas y 2 solo si hace falta un caso por HTTP. No usar
 - Con compra UTILIZADA: se crea; con varias compras, igual una sola reseña.
 - Segunda reseña del mismo usuario al mismo evento: error.
 - Puntaje fuera de rango o no múltiplo de 0,5: 400.
-- `GET /eventos/:id/resenias` devuelve las reseñas del evento.
+- `GET /eventos/:id/resenias` devuelve las reseñas del organizador del evento
+  (todos sus eventos, ordenadas de más reciente a más antigua).
 - El puntaje del organizador es el promedio de las reseñas de todos sus
   eventos (probar con al menos dos eventos del mismo organizador).
 

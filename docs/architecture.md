@@ -89,7 +89,21 @@ La lógica vive en las entidades, no en los services:
       parte de la compra.
     - `paraRespuesta()` NO incluye los mensajes.
 - `Evento`: `tuPrecioEstaEntre(min, max)`, `precioDesde()`, `yaSeRealizo()`,
-  `esOrganizadoPor(usuario)`.
+  `esOrganizadoPor(usuario)`. `sinDetalles(puntajeOrganizador)` acepta el
+  puntaje como parámetro para incluirlo en la respuesta sin acoplar al
+  repositorio de reseñas.
+- `Resenia`:
+  - `Resenia.crear({ comprador, evento, puntaje, comentario, compras,
+    reseniaPrevia })` valida puntaje (1–5, pasos de 0.5, `ValidationError`),
+    comentario (no vacío, máx 1000 caracteres, `ValidationError`), requiere
+    al menos una compra `UTILIZADA` del comprador en ese evento
+    (`ForbiddenError`), y rechaza si ya existe una reseña previa
+    (`ConflictError`). El orden de validación es: puntaje/comentario → compra
+    UTILIZADA → reseña previa.
+  - `Resenia.promedio(resenias)` devuelve el promedio redondeado a 1 decimal,
+    o `null` si no hay reseñas.
+  - `paraRespuesta()` devuelve el objeto de respuesta con autor y evento
+    sin exponer email ni contraseña.
 - `SISTEMA`: constante que representa al sistema como actor de los cambios
   automáticos.
 - Las transiciones de estado inválidas lanzan `ConflictError`; el usuario
@@ -194,8 +208,8 @@ Todos requieren autenticación salvo el login.
 | GET | `/eventos/:id` | Detalle de un evento |
 | POST | `/eventos` | Crear evento con sus tipos de entrada |
 | GET | `/eventos/:id/compras` | Compras del evento (solo su organizador) |
-| GET | `/eventos/:id/resenias` | Reseñas de un evento |
-| POST | `/eventos/:id/resenias` | Dejar una reseña |
+| GET | `/eventos/:id/resenias` | Reseñas del organizador del evento (todos sus eventos, más reciente primero) |
+| POST | `/eventos/:id/resenias` | Dejar una reseña (requiere compra UTILIZADA) |
 | GET | `/compras` | Mis compras |
 | POST | `/compras` | Crear compra (queda PENDIENTE y reserva cupo) |
 | POST | `/compras/:id/pago` | Pago simulado (PENDIENTE → CONFIRMADA) |
@@ -208,6 +222,10 @@ Todos requieren autenticación salvo el login.
 | DELETE | `/favoritos/:eventoId` | Quitar favorito |
  
 - `orden` acepta `precio`, `fecha` y `puntaje`.
+- `puntajeOrganizador` se calcula como el promedio de todas las reseñas de
+  todos los eventos del organizador, redondeado a 1 decimal; es `null` si no
+  tiene reseñas. En `GET /eventos?orden=puntaje` los mejores van primero y
+  los `null` al final, con desempate por fecha y nombre.
 - Los cambios de estado son acciones (`/pago`, `/uso`, `/cancelacion`) y no
   un `PUT` genérico de estado, para que cada regla tenga su propio endpoint.
 ### Mensajería (chat de la compra)
