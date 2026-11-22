@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,13 +11,16 @@ import ErrorMensaje from '../components/ErrorMensaje.js';
 import EstadoVacio from '../components/EstadoVacio.js';
 import EstadoBadge from '../components/EstadoBadge.js';
 import { useSession } from '../context/SessionContext.js';
-import { listarMisCompras as apiListarMisCompras } from '../api/compras.js';
+import { listarMisCompras as apiListarMisCompras, cancelarCompra as apiCancelarCompra } from '../api/compras.js';
 import { pagarCompra as apiPagarCompra } from '../api/compras.js';
 import { formatearPrecio, formatearFechaHora, textoDias } from '../utils/formato.js';
 import theme from '../theme.js';
 
-function CompraCard({ compra, onPagar, onOpenChat }) {
+function CompraCard({ compra, onPagar, onOpenChat, onCancelar, onResenar, cancelando, resenando }) {
   const [historialVisible, setHistorialVisible] = useState(false);
+
+  const puedeCancelar = compra.estado === 'PENDIENTE' || compra.estado === 'CONFIRMADA';
+  const puedeResenar = compra.estado === 'UTILIZADA';
 
   return (
     <View style={styles.card}>
@@ -51,6 +54,7 @@ function CompraCard({ compra, onPagar, onOpenChat }) {
           style={styles.mensajesBoton}
           onPress={() => onOpenChat(compra)}
           activeOpacity={0.7}
+          accessibilityLabel="Abrir chat de mensajes"
         >
           <Ionicons name="chatbubble-outline" size={18} color={theme.colors.primario} />
           <Text style={styles.mensajesBotonText}>Mensajes</Text>
@@ -61,6 +65,32 @@ function CompraCard({ compra, onPagar, onOpenChat }) {
       {compra.estado === 'PENDIENTE' && (
         <View style={styles.pagarContainer}>
           <Boton title="Pagar" onPress={() => onPagar(compra)} variant="primary" />
+        </View>
+      )}
+
+      {/* Botón Cancelar para PENDIENTE y CONFIRMADA */}
+      {puedeCancelar && (
+        <View style={styles.accionesRow}>
+          <Boton
+            title="Cancelar compra"
+            onPress={() => onCancelar(compra)}
+            variant="danger"
+            loading={cancelando}
+            disabled={cancelando}
+          />
+        </View>
+      )}
+
+      {/* Botón Dejar reseña para UTILIZADA */}
+      {puedeResenar && (
+        <View style={styles.accionesRow}>
+          <Boton
+            title="Dejar reseña"
+            onPress={() => onResenar(compra)}
+            variant="secondary"
+            loading={resenando}
+            disabled={resenando}
+          />
         </View>
       )}
 
@@ -114,6 +144,7 @@ function ComprasScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [pagandoId, setPagandoId] = useState(null);
+  const [cancelandoId, setCancelandoId] = useState(null);
 
   const cargarCompras = useCallback(() => {
     if (!token) return;
@@ -172,6 +203,51 @@ function ComprasScreen({ navigation }) {
     [navigation]
   );
 
+  const handleCancelar = useCallback(
+    (compra) => {
+      const esPendiente = compra.estado === 'PENDIENTE';
+      const mensajeReembolso = esPendiente
+        ? 'No se realizó ningún pago, así que no hay reembolso.'
+        : 'Se te reembolsará el importe.';
+
+      Alert.alert(
+        'Cancelar compra',
+        `¿Estás seguro de que querés cancelar "${compra.evento?.nombre}"?\n\n${mensajeReembolso}`,
+        [
+          { text: 'No', style: 'cancel' },
+          {
+            text: 'Sí, cancelar',
+            style: 'destructive',
+            onPress: () => {
+              setCancelandoId(compra.id);
+              apiCancelarCompra(compra.id, token)
+                .then(() => {
+                  cargarCompras();
+                })
+                .catch((err) => {
+                  setError(err.message);
+                })
+                .finally(() => {
+                  setCancelandoId(null);
+                });
+            },
+          },
+        ]
+      );
+    },
+    [token, cargarCompras]
+  );
+
+  const handleResenar = useCallback(
+    (compra) => {
+      navigation.navigate('Resena', {
+        eventoId: compra.evento?.id,
+        titulo: compra.evento?.nombre || 'Evento',
+      });
+    },
+    [navigation]
+  );
+
   if (loading) {
     return (
       <Pantalla>
@@ -209,6 +285,10 @@ function ComprasScreen({ navigation }) {
             compra={item}
             onPagar={handlePagar}
             onOpenChat={handleOpenChat}
+            onCancelar={handleCancelar}
+            onResenar={handleResenar}
+            cancelando={cancelandoId === item.id}
+            resenando={false}
           />
         )}
         contentContainerStyle={styles.listContent}
@@ -274,6 +354,9 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   pagarContainer: {
+    marginTop: theme.espaciados.sm,
+  },
+  accionesRow: {
     marginTop: theme.espaciados.sm,
   },
   mensajesBoton: {

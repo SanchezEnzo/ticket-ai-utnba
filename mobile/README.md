@@ -91,13 +91,21 @@ mobile/
       Cargando.js         # Spinner centrado
       ErrorMensaje.js     # Mensaje de error con reintentar
       EstadoVacio.js      # Ícono + texto para listas vacías
+      EstadoBadge.js      # Etiqueta de estado de compra
+      EventoCard.js       # Tarjeta de evento con favorito
     screens/
       LoginScreen.js      # Inicio de sesión
       CuentaScreen.js     # Datos del usuario y cerrar sesión
-      ExplorarScreen.js   # Próximamente
-      FavoritosScreen.js  # Próximamente
-      ComprasScreen.js    # Próximamente
-      MisEventosScreen.js # Próximamente
+      ExplorarScreen.js   # Catálogo de eventos con búsqueda
+      FavoritosScreen.js  # Eventos guardados como favoritos
+      ComprasScreen.js    # Mis compras con cancelar y reseña
+      MisEventosScreen.js # Eventos publicados por el usuario
+      DetalleEventoScreen.js  # Detalle del evento con reseñas
+      CompraScreen.js     # Formulario para comprar entradas
+      CrearEventoScreen.js  # Formulario para crear evento
+      ComprasDelEventoScreen.js  # Compras de un evento (organizador)
+      ChatScreen.js       # Chat de mensajes de una compra
+      ResenaScreen.js     # Formulario para dejar reseña
     navigation/
       AppNavigator.js     # Stack + Tabs con React Navigation
 ```

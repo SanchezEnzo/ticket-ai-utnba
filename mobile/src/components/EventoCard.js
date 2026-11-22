@@ -30,6 +30,7 @@ function EventoCard({ evento, onPress, showEventStatus = false }) {
           style={styles.favButton}
           onPress={handleFavorito}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={esFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
         >
           <Text style={[styles.heart, esFav && styles.heartActive]}>
             {esFav ? '❤️' : '🤍'}

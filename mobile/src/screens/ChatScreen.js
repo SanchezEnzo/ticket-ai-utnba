@@ -221,6 +221,7 @@ function ChatScreen({ navigation }) {
               onPress={handleEnviar}
               disabled={!texto.trim() || enviando}
               activeOpacity={0.7}
+              accessibilityLabel="Enviar mensaje"
             >
               <Ionicons
                 name="send"

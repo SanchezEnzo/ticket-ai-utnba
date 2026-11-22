@@ -58,3 +58,14 @@ export function crearEvento(datos, token) {
 export function listarComprasDelEvento(eventoId, token) {
   return request('GET', `/eventos/${eventoId}/compras`, { token });
 }
+
+/**
+ * Crea una reseña para un evento.
+ * @param {string} eventoId
+ * @param {{ puntaje: number, comentario: string }} datos - puntaje entre 1 y 5 (paso 0.5)
+ * @param {string} token
+ * @returns {Promise<Object>} La reseña creada
+ */
+export function crearResenia(eventoId, datos, token) {
+  return request('POST', `/eventos/${eventoId}/resenias`, { body: datos, token });
+}

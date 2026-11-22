@@ -15,6 +15,7 @@ import CompraScreen from '../screens/CompraScreen.js';
 import CrearEventoScreen from '../screens/CrearEventoScreen.js';
 import ComprasDelEventoScreen from '../screens/ComprasDelEventoScreen.js';
 import ChatScreen from '../screens/ChatScreen.js';
+import ResenaScreen from '../screens/ResenaScreen.js';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -148,6 +149,21 @@ function AppNavigator() {
                 fontWeight: 'bold',
               },
               headerTitle: route.params?.titulo || 'Mensajes',
+            })}
+          />
+          <Stack.Screen
+            name="Resena"
+            component={ResenaScreen}
+            options={({ route }) => ({
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: theme.colors.primario,
+              },
+              headerTintColor: '#FFFFFF',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              headerTitle: route.params?.titulo || 'Dejar reseña',
             })}
           />
         </>

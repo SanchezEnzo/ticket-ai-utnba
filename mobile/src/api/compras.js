@@ -38,3 +38,14 @@ export function listarMisCompras(token) {
 export function marcarUtilizada(id, token) {
   return request('POST', `/compras/${id}/uso`, { token });
 }
+
+/**
+ * Cancela una compra PENDIENTE o CONFIRMADA.
+ * Si está CONFIRMADA, se reembolsa automáticamente.
+ * @param {string} id
+ * @param {string} token
+ * @returns {Promise<Object>} La compra actualizada
+ */
+export function cancelarCompra(id, token) {
+  return request('POST', `/compras/${id}/cancelacion`, { token });
+}

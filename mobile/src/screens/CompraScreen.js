@@ -201,6 +201,7 @@ function CompraScreen({ navigation }) {
             style={styles.cantidadBtn}
             onPress={() => cambiarCantidad(-1)}
             disabled={cantidad <= 1}
+            accessibilityLabel="Reducir cantidad"
           >
             <Text style={[
               styles.cantidadBtnText,
@@ -224,6 +225,7 @@ function CompraScreen({ navigation }) {
           <TouchableOpacity
             style={styles.cantidadBtn}
             onPress={() => cambiarCantidad(1)}
+            accessibilityLabel="Aumentar cantidad"
           >
             <Text style={styles.cantidadBtnText}>+</Text>
           </TouchableOpacity>
