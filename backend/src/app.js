@@ -6,6 +6,7 @@ import { crearRutasEvento } from './routes/eventos.js';
 import { crearRutasCategoria } from './routes/categorias.js';
 import { crearRutasCompra } from './routes/compras.js';
 import { crearRutasResenia } from './routes/resenias.js';
+import { crearRutasFavorito } from './routes/favoritos.js';
 
 function crearApp({ repositorios, servicios, controllers }) {
   const app = express();
@@ -51,6 +52,12 @@ function crearApp({ repositorios, servicios, controllers }) {
     authMiddleware,
   });
   app.use('/eventos', reseniaRoutes);
+
+  const favoritoRoutes = crearRutasFavorito({
+    favoritoController: controllers.favoritoController,
+    authMiddleware,
+  });
+  app.use('', favoritoRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

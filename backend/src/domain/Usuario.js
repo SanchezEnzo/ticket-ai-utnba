@@ -38,6 +38,20 @@ class Usuario {
     return verificarHash(contrasena, this._hash);
   }
 
+  marcarFavorito(eventoId) {
+    if (!this.favoritos.includes(eventoId)) {
+      this.favoritos.push(eventoId);
+    }
+  }
+
+  desmarcarFavorito(eventoId) {
+    this.favoritos = this.favoritos.filter(id => id !== eventoId);
+  }
+
+  esFavorito(eventoId) {
+    return this.favoritos.includes(eventoId);
+  }
+
   sinPassword() {
     return {
       id: this.id,

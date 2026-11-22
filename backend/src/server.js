@@ -15,8 +15,10 @@ import { MensajeController } from './controllers/MensajeController.js';
 import { ReseniaRepository } from './repositories/ReseniaRepository.js';
 import { ReseniaService } from './services/ReseniaService.js';
 import { ReseniaController } from './controllers/ReseniaController.js';
+import { FavoritoService } from './services/FavoritoService.js';
+import { FavoritoController } from './controllers/FavoritoController.js';
 import { seedUsuarios } from './seed/usuarios.js';
-import { seedCategorias, seedEventos } from './seed/eventos.js';
+import { seedCategorias, seedEventos, seedFavoritos } from './seed/eventos.js';
 import { seedCompras } from './seed/compras.js';
 import { seedResenias } from './seed/resenias.js';
 
@@ -29,6 +31,7 @@ const reseniaRepository = new ReseniaRepository();
 seedUsuarios(usuarioRepository);
 seedCategorias(categoriaRepository);
 seedEventos(eventoRepository, categoriaRepository, usuarioRepository);
+seedFavoritos(usuarioRepository);
 seedCompras(compraRepository, eventoRepository, usuarioRepository);
 seedResenias(reseniaRepository, compraRepository, eventoRepository, usuarioRepository);
 
@@ -51,11 +54,13 @@ const eventoController = new EventoController({ eventoService, compraService, re
 const compraController = new CompraController({ compraService });
 const mensajeController = new MensajeController({ mensajeService });
 const reseniaController = new ReseniaController({ reseniaService });
+const favoritoService = new FavoritoService({ eventoRepository, usuarioRepository, reseniaService });
+const favoritoController = new FavoritoController({ favoritoService });
 
 const app = crearApp({
   repositorios: { usuarioRepository, categoriaRepository, eventoRepository, compraRepository, reseniaRepository },
-  servicios: { sesionService, authService, eventoService, compraService, mensajeService, reseniaService },
-  controllers: { authController, eventoController, compraController, mensajeController, reseniaController },
+  servicios: { sesionService, authService, eventoService, compraService, mensajeService, reseniaService, favoritoService },
+  controllers: { authController, eventoController, compraController, mensajeController, reseniaController, favoritoController },
 });
 
 const port = process.env.PORT || 3000;

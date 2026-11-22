@@ -77,3 +77,61 @@ describe('Usuario', () => {
     assert.equal(sinPass.contrasena, undefined);
   });
 });
+
+describe('Usuario - favoritos', () => {
+  const crearUsuario = () =>
+    Usuario.crear({
+      id: 'fav-test',
+      nombre: 'Fav',
+      apellido: 'Test',
+      email: 'fav@example.com',
+      contrasena: 'clave',
+    });
+
+  it('marcarFavorito agrega el evento al array', () => {
+    const u = crearUsuario();
+    u.marcarFavorito('evt_1');
+    assert.deepEqual(u.favoritos, ['evt_1']);
+  });
+
+  it('marcarFavorito no duplica si ya existe', () => {
+    const u = crearUsuario();
+    u.marcarFavorito('evt_1');
+    u.marcarFavorito('evt_1');
+    assert.deepEqual(u.favoritos, ['evt_1']);
+  });
+
+  it('marcarFavorito mantiene el orden de inserción', () => {
+    const u = crearUsuario();
+    u.marcarFavorito('evt_a');
+    u.marcarFavorito('evt_b');
+    u.marcarFavorito('evt_c');
+    assert.deepEqual(u.favoritos, ['evt_a', 'evt_b', 'evt_c']);
+  });
+
+  it('desmarcarFavorito quita el evento del array', () => {
+    const u = crearUsuario();
+    u.marcarFavorito('evt_1');
+    u.marcarFavorito('evt_2');
+    u.desmarcarFavorito('evt_1');
+    assert.deepEqual(u.favoritos, ['evt_2']);
+  });
+
+  it('desmarcarFavorito no falla si el evento no estaba', () => {
+    const u = crearUsuario();
+    u.marcarFavorito('evt_1');
+    u.desmarcarFavorito('evt_no_existe');
+    assert.deepEqual(u.favoritos, ['evt_1']);
+  });
+
+  it('esFavorito devuelve true cuando el evento esta marcado', () => {
+    const u = crearUsuario();
+    u.marcarFavorito('evt_1');
+    assert.equal(u.esFavorito('evt_1'), true);
+  });
+
+  it('esFavorito devuelve false cuando el evento no esta marcado', () => {
+    const u = crearUsuario();
+    assert.equal(u.esFavorito('evt_no_existe'), false);
+  });
+});

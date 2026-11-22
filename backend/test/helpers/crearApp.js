@@ -15,8 +15,10 @@ import { MensajeController } from '../../src/controllers/MensajeController.js';
 import { ReseniaRepository } from '../../src/repositories/ReseniaRepository.js';
 import { ReseniaService } from '../../src/services/ReseniaService.js';
 import { ReseniaController } from '../../src/controllers/ReseniaController.js';
+import { FavoritoService } from '../../src/services/FavoritoService.js';
+import { FavoritoController } from '../../src/controllers/FavoritoController.js';
 import { seedUsuarios } from '../../src/seed/usuarios.js';
-import { seedCategorias, seedEventos } from '../../src/seed/eventos.js';
+import { seedCategorias, seedEventos, seedFavoritos } from '../../src/seed/eventos.js';
 import { seedCompras } from '../../src/seed/compras.js';
 import { seedResenias } from '../../src/seed/resenias.js';
 
@@ -39,6 +41,7 @@ export async function crearApp() {
   seedUsuarios(usuarioRepository);
   seedCategorias(categoriaRepository);
   seedEventos(eventoRepository, categoriaRepository, usuarioRepository);
+  seedFavoritos(usuarioRepository);
   seedCompras(compraRepository, eventoRepository, usuarioRepository);
   seedResenias(reseniaRepository, compraRepository, eventoRepository, usuarioRepository);
 
@@ -61,11 +64,13 @@ export async function crearApp() {
   const compraController = new CompraController({ compraService });
   const mensajeController = new MensajeController({ mensajeService });
   const reseniaController = new ReseniaController({ reseniaService });
+  const favoritoService = new FavoritoService({ eventoRepository, usuarioRepository, reseniaService });
+  const favoritoController = new FavoritoController({ favoritoService });
 
   const app = crearAppExpress({
     repositorios: { usuarioRepository, categoriaRepository, eventoRepository, compraRepository, reseniaRepository },
-    servicios: { sesionService, authService, eventoService, compraService, mensajeService, reseniaService },
-    controllers: { authController, eventoController, compraController, mensajeController, reseniaController },
+    servicios: { sesionService, authService, eventoService, compraService, mensajeService, reseniaService, favoritoService },
+    controllers: { authController, eventoController, compraController, mensajeController, reseniaController, favoritoController },
   });
   const server = app.listen(0);
   const port = server.address().port;

@@ -194,4 +194,14 @@ const seedIds = {
   },
 };
 
-export { seedCategorias, seedEventos, seedIds };
+function seedFavoritos(usuarioRepo) {
+  const comprador1 = usuarioRepo.buscarPorId('comprador1');
+  if (comprador1) {
+    comprador1.marcarFavorito('evt_recital1');
+    comprador1.marcarFavorito('evt_teatro1');
+    comprador1.marcarFavorito('evt_pasado1');
+    usuarioRepo.guardar(comprador1);
+  }
+}
+
+export { seedCategorias, seedEventos, seedFavoritos, seedIds };
