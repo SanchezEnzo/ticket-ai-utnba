@@ -5,6 +5,7 @@ import { crearRutasAuth } from './routes/auth.js';
 import { crearRutasEvento } from './routes/eventos.js';
 import { crearRutasCategoria } from './routes/categorias.js';
 import { crearRutasCompra } from './routes/compras.js';
+import { crearRutasResenia } from './routes/resenias.js';
 
 function crearApp({ repositorios, servicios, controllers }) {
   const app = express();
@@ -44,6 +45,12 @@ function crearApp({ repositorios, servicios, controllers }) {
     authMiddleware,
   });
   app.use('/compras', compraRoutes);
+
+  const reseniaRoutes = crearRutasResenia({
+    reseniaController: controllers.reseniaController,
+    authMiddleware,
+  });
+  app.use('/eventos', reseniaRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

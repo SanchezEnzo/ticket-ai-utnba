@@ -12,41 +12,50 @@ import { CompraService } from './services/CompraService.js';
 import { CompraController } from './controllers/CompraController.js';
 import { MensajeService } from './services/MensajeService.js';
 import { MensajeController } from './controllers/MensajeController.js';
+import { ReseniaRepository } from './repositories/ReseniaRepository.js';
+import { ReseniaService } from './services/ReseniaService.js';
+import { ReseniaController } from './controllers/ReseniaController.js';
 import { seedUsuarios } from './seed/usuarios.js';
 import { seedCategorias, seedEventos } from './seed/eventos.js';
 import { seedCompras } from './seed/compras.js';
+import { seedResenias } from './seed/resenias.js';
 
 // 1. Repositorios
 const usuarioRepository = new UsuarioRepository();
 const categoriaRepository = new CategoriaRepository();
 const eventoRepository = new EventoRepository();
 const compraRepository = new CompraRepository();
+const reseniaRepository = new ReseniaRepository();
 seedUsuarios(usuarioRepository);
 seedCategorias(categoriaRepository);
 seedEventos(eventoRepository, categoriaRepository, usuarioRepository);
 seedCompras(compraRepository, eventoRepository, usuarioRepository);
+seedResenias(reseniaRepository, compraRepository, eventoRepository, usuarioRepository);
 
 // 2. Servicios
 const sesionService = new SesionService();
 const authService = new AuthService({ usuarioRepository, sesionService });
+const reseniaService = new ReseniaService({ reseniaRepository, compraRepository, eventoRepository });
 const eventoService = new EventoService({
   eventoRepository,
   categoriaRepository,
   usuarioRepository,
+  reseniaService,
 });
 const compraService = new CompraService({ compraRepository, eventoRepository });
 const mensajeService = new MensajeService({ compraRepository });
 
 // 3. Controllers
 const authController = new AuthController({ authService });
-const eventoController = new EventoController({ eventoService });
+const eventoController = new EventoController({ eventoService, compraService, reseniaService });
 const compraController = new CompraController({ compraService });
 const mensajeController = new MensajeController({ mensajeService });
+const reseniaController = new ReseniaController({ reseniaService });
 
 const app = crearApp({
-  repositorios: { usuarioRepository, categoriaRepository, eventoRepository, compraRepository },
-  servicios: { sesionService, authService, eventoService, compraService, mensajeService },
-  controllers: { authController, eventoController, compraController, mensajeController },
+  repositorios: { usuarioRepository, categoriaRepository, eventoRepository, compraRepository, reseniaRepository },
+  servicios: { sesionService, authService, eventoService, compraService, mensajeService, reseniaService },
+  controllers: { authController, eventoController, compraController, mensajeController, reseniaController },
 });
 
 const port = process.env.PORT || 3000;

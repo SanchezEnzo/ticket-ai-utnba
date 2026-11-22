@@ -59,7 +59,8 @@ describe('GET /eventos/:id', () => {
     const data = await res.json();
     assert.equal(data.id, seedIds.eventos.rockEnVivo);
     assert.equal(data.nombre, 'Rock en Vivo');
-    assert.equal(data.puntajeOrganizador, null);
+    // organizador1 tiene reseñas en el seed: promedio 4.3
+    assert.equal(data.puntajeOrganizador, 4.3);
     assert.equal('email' in data.organizador, false);
   });
 
@@ -368,14 +369,27 @@ describe('GET /eventos (catálogo)', () => {
     }
   });
 
-  it('debe ordenar por puntaje (estable, todos null)', async () => {
+  it('debe ordenar por puntaje (mejor primero, null al final)', async () => {
     const res = await fetch(`${baseUrl}/eventos?orden=puntaje`, {
       headers: authHeaders(),
     });
     assert.equal(res.status, 200);
     const data = await res.json();
+    // Los eventos con puntaje no-null van primero, ordenados de mayor a menor
+    // Los eventos con null van al final
+    let foundNull = false;
+    let prevPuntaje = Infinity;
     for (const e of data) {
-      assert.equal(e.puntajeOrganizador, null);
+      if (e.puntajeOrganizador === null) {
+        foundNull = true;
+      } else {
+        assert.ok(!foundNull, 'Los eventos con puntaje no-null deben ir antes de los null');
+        assert.ok(
+          e.puntajeOrganizador <= prevPuntaje || Math.abs(e.puntajeOrganizador - prevPuntaje) < 1e-9,
+          `El puntaje ${e.puntajeOrganizador} debería ser <= ${prevPuntaje}`
+        );
+        prevPuntaje = e.puntajeOrganizador;
+      }
     }
   });
 

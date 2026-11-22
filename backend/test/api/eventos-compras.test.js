@@ -165,7 +165,7 @@ describe('API - GET /eventos/:id/compras', () => {
 
   describe('cupoDisponible', () => {
     it('refleja el cupo reducido por las compras del seed', async () => {
-      // evt_recital1 tiene General con cupo 200, el seed crea 1 compra PENDIENTE de cantidad 1
+      // evt_recital1 tiene General con cupo 200, el seed crea 1 compra PENDIENTE y 1 UTILIZADA (seedResenias)
       const token = await login(fetch, baseUrl, EMAIL_ORGANIZADOR, PASSWORD);
       const res = await fetch(`${baseUrl}/eventos/${seedIds.eventos.rockEnVivo}/compras`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -174,7 +174,7 @@ describe('API - GET /eventos/:id/compras', () => {
 
       const general = data.evento.tiposEntrada.find((te) => te.nombre === 'General');
       assert.equal(general.cupo, 200);
-      assert.equal(general.cupoDisponible, 199);
+      assert.equal(general.cupoDisponible, 198);
     });
 
     it('invariante: cupoDisponible <= cupo para cada tipo', async () => {

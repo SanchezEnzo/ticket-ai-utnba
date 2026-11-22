@@ -1,7 +1,8 @@
 class EventoController {
-  constructor({ eventoService, compraService }) {
+  constructor({ eventoService, compraService, reseniaService }) {
     this._eventoService = eventoService;
     this._compraService = compraService;
+    this._reseniaService = reseniaService;
   }
 
   listarCategorias = (req, res, _next) => {
@@ -12,7 +13,10 @@ class EventoController {
   detalleEvento = async (req, res, next) => {
     const { id } = req.validado.params;
     const evento = this._eventoService.buscarEventoPorId(id);
-    res.json(evento.sinDetalles());
+    const puntaje = this._reseniaService
+      ? this._reseniaService.puntajeDelOrganizador(evento.organizador.id)
+      : null;
+    res.json(evento.sinDetalles(puntaje));
   };
 
   crearEvento = async (req, res, next) => {
@@ -24,8 +28,8 @@ class EventoController {
 
   listarEventos = async (req, res, next) => {
     const { q, categoria, orden } = req.validado.query;
-    const eventos = this._eventoService.listarEventos({ q, categoria, orden });
-    res.json(eventos.map((e) => e.sinDetalles()));
+    const { eventos, puntajesMap } = this._eventoService.listarEventos({ q, categoria, orden });
+    res.json(eventos.map((e) => e.sinDetalles(puntajesMap.get(e.organizador.id))));
   };
 
   comprasDelEvento = async (req, res, next) => {

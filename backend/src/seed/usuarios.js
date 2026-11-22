@@ -6,6 +6,9 @@ import { Usuario } from '../domain/Usuario.js';
  * Credenciales:
  *   - organizador1@example.com / contraseña123
  *   - comprador1@example.com / contraseña123
+ *   - comprador2@example.com / contraseña123
+ *   - comprador3@example.com / contraseña123
+ *   - organizador2@example.com / contraseña123
  *   - ambos1@example.com / contraseña123
  */
 function seedUsuarios(repositorio) {
@@ -22,6 +25,27 @@ function seedUsuarios(repositorio) {
       nombre: 'Comprador',
       apellido: 'Uno',
       email: 'comprador1@example.com',
+      contrasena: 'contraseña123',
+    }),
+    Usuario.crear({
+      id: 'comprador2',
+      nombre: 'Comprador',
+      apellido: 'Dos',
+      email: 'comprador2@example.com',
+      contrasena: 'contraseña123',
+    }),
+    Usuario.crear({
+      id: 'comprador3',
+      nombre: 'Comprador',
+      apellido: 'Tres',
+      email: 'comprador3@example.com',
+      contrasena: 'contraseña123',
+    }),
+    Usuario.crear({
+      id: 'organizador2',
+      nombre: 'Organizador',
+      apellido: 'Dos',
+      email: 'organizador2@example.com',
       contrasena: 'contraseña123',
     }),
     Usuario.crear({

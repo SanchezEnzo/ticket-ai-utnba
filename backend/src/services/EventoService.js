@@ -4,10 +4,11 @@ import { Evento } from '../domain/Evento.js';
 import { ahora, parsearFecha } from '../domain/reloj.js';
 
 class EventoService {
-  constructor({ eventoRepository, categoriaRepository, usuarioRepository }) {
+  constructor({ eventoRepository, categoriaRepository, usuarioRepository, reseniaService }) {
     this._eventoRepository = eventoRepository;
     this._categoriaRepository = categoriaRepository;
     this._usuarioRepository = usuarioRepository;
+    this._reseniaService = reseniaService;
   }
 
   listarCategorias() {
@@ -84,6 +85,12 @@ class EventoService {
       eventos = eventos.filter((e) => e.categoria.id === categoria);
     }
 
+    // Calcular puntajes de organizadores
+    const organizadorIds = [...new Set(eventos.map((e) => e.organizador.id))];
+    const puntajesMap = this._reseniaService
+      ? this._reseniaService.puntajesDeOrganizadores(organizadorIds)
+      : new Map();
+
     // Orden
     if (orden === 'precio') {
       eventos.sort((a, b) => {
@@ -99,7 +106,15 @@ class EventoService {
       });
     } else if (orden === 'puntaje') {
       eventos.sort((a, b) => {
-        // Todos tienen puntaje null, se ordena por desempate
+        const puntajeA = puntajesMap.get(a.organizador.id);
+        const puntajeB = puntajesMap.get(b.organizador.id);
+        // null al final
+        if (puntajeA === null && puntajeB === null) return this._desempate(a, b);
+        if (puntajeA === null) return 1;
+        if (puntajeB === null) return -1;
+        // Mejor puntaje primero
+        const diff = puntajeB - puntajeA;
+        if (Math.abs(diff) > 1e-9) return diff;
         return this._desempate(a, b);
       });
     } else {
@@ -111,7 +126,7 @@ class EventoService {
       });
     }
 
-    return eventos;
+    return { eventos, puntajesMap };
   }
 
   _desempate(a, b) {

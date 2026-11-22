@@ -75,7 +75,7 @@ class Evento {
     return this.organizador.id === usuario.id;
   }
 
-  sinDetalles() {
+  sinDetalles(puntajeOrganizador) {
     return {
       id: this.id,
       nombre: this.nombre,
@@ -100,7 +100,7 @@ class Evento {
         cupoDisponible: te.cupoDisponible,
       })),
       precioDesde: this.precioDesde(),
-      puntajeOrganizador: null,
+      puntajeOrganizador: puntajeOrganizador !== undefined ? puntajeOrganizador : null,
     };
   }
 }
