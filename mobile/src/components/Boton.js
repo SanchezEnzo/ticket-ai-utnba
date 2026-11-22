@@ -1,7 +1,7 @@
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import theme from '../theme.js';
 
-function Boton({ title, onPress, loading, disabled, variant = 'primary' }) {
+function Boton({ title, onPress, loading, disabled, variant = 'primary', compact }) {
   const isDisabled = disabled || loading;
 
   let colorFondo;
@@ -17,6 +17,7 @@ function Boton({ title, onPress, loading, disabled, variant = 'primary' }) {
     <TouchableOpacity
       style={[
         styles.button,
+        compact && styles.compact,
         { backgroundColor: colorFondo },
         isDisabled && styles.disabled,
       ]}
@@ -39,6 +40,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+  },
+  compact: {
+    width: 'auto',
+    paddingHorizontal: theme.espaciados.md,
   },
   disabled: {
     opacity: 0.5,

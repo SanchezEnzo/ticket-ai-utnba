@@ -128,6 +128,7 @@ function MisEventosScreen({ navigation }) {
               title="Crear evento"
               onPress={handleCrearEvento}
               variant="primary"
+              compact
             />
           </View>
           <FlatList
